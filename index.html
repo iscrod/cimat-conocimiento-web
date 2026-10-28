@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>CIMAT | Plataforma de extracción de conocimiento</title>
-  <link rel="stylesheet" href="styles.css?v=0.2.0">
+  <link rel="stylesheet" href="styles.css?v=0.3.0">
 </head>
 <body>
 <main class="shell">
   <header>
     <div>
-      <span class="tag">PROTOTIPO ACADÉMICO · V0.2.0</span>
+      <span class="tag">PROTOTIPO ACADÉMICO · V0.3.0</span>
       <h1>Plataforma de extracción de conocimiento</h1>
       <p>Gestión organizacional y mejora de procesos de software · ISO/IEC 29110</p>
     </div>
@@ -44,6 +44,7 @@
       <button type="button" class="tab" data-view="empresas" role="tab" aria-selected="false">Mis empresas</button>
       <button type="button" class="tab" data-view="informes" role="tab" aria-selected="false">Informes</button>
       <button type="button" class="tab" data-view="perfil" role="tab" aria-selected="false">Mi perfil</button>
+      <button type="button" class="tab" data-view="administracion" role="tab" aria-selected="false">Administración</button>
     </nav>
 
     <section data-panel="resumen" role="tabpanel">
@@ -112,11 +113,68 @@
         <p class="subtle">No puedes modificar tu identificador, tu empresa ni tus permisos desde esta sección.</p>
       </article>
     </section>
+
+    <section data-panel="administracion" class="hidden" role="tabpanel">
+      <article class="card">
+        <h2>Administración de organizaciones</h2>
+        <p>Alta y actualización de empresas autorizadas. El acceso requiere un permiso global otorgado por un administrador del proyecto.</p>
+        <p id="admin-status" class="form-status" role="status">Comprobando autorización...</p>
+      </article>
+      <article id="admin-controls" class="card hidden">
+        <h2>Registrar o actualizar empresa</h2>
+        <p>Selecciona una empresa existente para editarla o deja la opción nueva para registrarla.</p>
+        <form id="company-form">
+          <label>Empresa existente
+            <select id="company-id">
+              <option value="">+ Registrar empresa nueva</option>
+            </select>
+          </label>
+          <label>Nombre de la empresa
+            <input id="company-name" type="text" required maxlength="200" placeholder="Nombre legal o nombre de prueba">
+          </label>
+          <label>Descripción
+            <textarea id="company-description" maxlength="4000" rows="3" placeholder="Información general de la organización"></textarea>
+          </label>
+          <div class="grid compact-grid">
+            <label>Sector
+              <input id="company-sector" maxlength="100" placeholder="Desarrollo de software">
+            </label>
+            <label>Tamaño
+              <select id="company-size">
+                <option value="">Sin especificar</option>
+                <option>Microempresa</option>
+                <option>Pequeña empresa</option>
+                <option>Mediana empresa</option>
+                <option>Gran empresa</option>
+              </select>
+            </label>
+            <label>País
+              <input id="company-country" maxlength="100" value="México">
+            </label>
+            <label>Estado
+              <input id="company-state" maxlength="100" placeholder="Zacatecas">
+            </label>
+          </div>
+          <label class="checkline">
+            <input type="checkbox" id="company-active" checked> Organización activa
+          </label>
+          <div class="form-actions">
+            <button type="submit" id="company-save">Guardar empresa</button>
+            <button type="button" class="outline" id="company-reset">Limpiar</button>
+          </div>
+        </form>
+        <p id="company-status" class="form-status" role="status"></p>
+      </article>
+      <article class="card muted">
+        <h2>Control de acceso</h2>
+        <p>Esta sección no permite asignar roles ni consultar respuestas individuales. La administración de empleados y expertos se implementará después de las pruebas de privacidad RF-SEG-01.</p>
+      </article>
+    </section>
   </section>
   <p id="notice" role="status" aria-live="polite"></p>
   <footer>Investigación académica · Utilizar solo información ficticia hasta concluir las pruebas de privacidad y seguridad.</footer>
 </main>
 <script src="config.js"></script>
-<script src="app.js?v=0.2.0" defer></script>
+<script src="app.js?v=0.3.0" defer></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* CIMAT Web v0.2.0 - prototipo sin dependencias externas de JavaScript.
+/* CIMAT Web v0.3.0 - prototipo sin dependencias externas de JavaScript.
  * API de autenticacion Supabase Auth y consultas PostgREST.
  * Solo utiliza clave PUBLICA y JWT del usuario; RLS protege los datos.
  * La sesion se conserva temporalmente en sessionStorage, no en GitHub.
@@ -12,6 +12,7 @@
   const key = String(config.SUPABASE_PUBLISHABLE_KEY || '');
   const storageKey = 'cimat_v012_sesion';
   let currentSession = null;
+  let adminCompanies = [];
 
   function visible(id, yes) {
     const element = $(id);
@@ -150,6 +151,8 @@
       $('report-count').textContent = '—';
       $('reports').textContent = 'Informes no disponibles: consulta restringida o error de conexión.';
     }
+    await checkAdministrator(session);
+
   }
 
   // El cambio de pestaña modifica solamente la presentación, nunca los permisos.
@@ -167,6 +170,141 @@
     });
   });
 
+
+
+  async function checkAdministrator(session) {
+    const status = $('admin-status');
+    const controls = $('admin-controls');
+    controls.classList.add('hidden');
+    status.textContent = 'Comprobando autorización...';
+    adminCompanies = [];
+    try {
+      const isAdmin = await api('/rest/v1/rpc/mi_acceso_administrador', {
+        method: 'POST', token: session.access_token, body: {}
+      });
+      if (isAdmin !== true) {
+        status.textContent = 'Tu cuenta no tiene permiso global de administración. El alta y edición de empresas están deshabilitadas.';
+        return;
+      }
+      const companies = await api(
+        '/rest/v1/empresas?select=id,nombre,descripcion,sector,tamano,pais,estado,activa&order=nombre.asc',
+        { token: session.access_token }
+      );
+      adminCompanies = companies;
+      updateCompanySelect();
+      controls.classList.remove('hidden');
+      status.textContent = 'Acceso administrativo autorizado. Organizaciones registradas: ' + companies.length + '.';
+    } catch (error) {
+      status.textContent = 'No fue posible comprobar el permiso administrativo: ' +
+        String(error.message || 'Error desconocido');
+    }
+  }
+
+  function updateCompanySelect() {
+    const select = $('company-id');
+    select.replaceChildren();
+    const first = document.createElement('option');
+    first.value = '';
+    first.textContent = '+ Registrar empresa nueva';
+    select.append(first);
+    adminCompanies.forEach(function (company) {
+      const option = document.createElement('option');
+      option.value = company.id;
+      option.textContent = company.nombre;
+      select.append(option);
+    });
+  }
+
+  function clearCompanyForm() {
+    $('company-form').reset();
+    $('company-id').value = '';
+    $('company-active').checked = true;
+    $('company-country').value = 'México';
+    $('company-status').textContent = '';
+  }
+
+  $('company-reset').addEventListener('click', clearCompanyForm);
+
+  $('company-id').addEventListener('change', function () {
+    const item = adminCompanies.find((company) => company.id === $('company-id').value);
+    if (!item) { clearCompanyForm(); return; }
+    $('company-name').value = item.nombre || '';
+    $('company-description').value = item.descripcion || '';
+    $('company-sector').value = item.sector || '';
+    $('company-size').value = item.tamano || '';
+    $('company-country').value = item.pais || '';
+    $('company-state').value = item.estado || '';
+    $('company-active').checked = item.activa === true;
+    $('company-status').textContent = 'Editando: ' + item.nombre;
+  });
+
+  $('company-form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const status = $('company-status');
+    const button = $('company-save');
+    status.classList.remove('error');
+    const session = currentSession;
+
+    if (!session || Date.now() >= session.expires_at) {
+      status.classList.add('error');
+      status.textContent = 'Tu sesión ha caducado. Cierra sesión y vuelve a entrar.';
+      return;
+    }
+    const id = $('company-id').value;
+    const payload = {
+      nombre: $('company-name').value.trim(),
+      descripcion: $('company-description').value.trim() || null,
+      sector: $('company-sector').value.trim() || null,
+      tamano: $('company-size').value || null,
+      pais: $('company-country').value.trim() || null,
+      estado: $('company-state').value.trim() || null
+    };
+    if (!payload.nombre || payload.nombre.length > 200) {
+      status.classList.add('error');
+      status.textContent = 'El nombre de la organización es obligatorio (máximo 200 caracteres).';
+      return;
+    }
+    if (id) payload.activa = $('company-active').checked;
+
+    button.disabled = true;
+    status.textContent = 'Guardando cambios...';
+    try {
+      const path = id
+        ? '/rest/v1/empresas?id=eq.' + encodeURIComponent(id) +
+          '&select=id,nombre,descripcion,sector,tamano,pais,estado,activa'
+        : '/rest/v1/empresas?select=id,nombre,descripcion,sector,tamano,pais,estado,activa';
+      const result = await api(path, {
+        method: id ? 'PATCH' : 'POST',
+        body: payload, token: session.access_token,
+        prefer: 'return=representation'
+      });
+      if (!Array.isArray(result) || result.length !== 1) {
+        throw new Error('La operación no fue autorizada por las políticas de seguridad.');
+      }
+      await checkAdministrator(session);
+      // Actualizar el resumen sin alterar la asignación de usuarios.
+      const companiesVisible = await api(
+        '/rest/v1/empresas?select=id,nombre,sector,estado&order=nombre.asc',
+        { token: session.access_token }
+      );
+      $('company-count').textContent = String(companiesVisible.length);
+      $('companies-preview').textContent = companiesVisible.length
+        ? companiesVisible.map((company) => company.nombre).join(' · ')
+        : 'No hay organizaciones visibles.';
+      renderList('companies', companiesVisible, function (company) {
+        return '<div class="item"><strong>' + escapeHTML(company.nombre) +
+          '</strong><p>' + escapeHTML(company.sector) + ' · ' +
+          escapeHTML(company.estado) + '</p></div>';
+      }, 'No hay organizaciones visibles.');
+      clearCompanyForm();
+      status.textContent = 'Empresa ' + (id ? 'actualizada' : 'registrada') + ' correctamente.';
+    } catch (error) {
+      status.classList.add('error');
+      status.textContent = 'No fue posible guardar: ' + String(error.message || 'Error desconocido');
+    } finally {
+      button.disabled = false;
+    }
+  });
 
   const validConfig = /^https:\/\/[a-z0-9.-]+$/i.test(root) &&
                       /^(sb_publishable_|eyJ)/.test(key);

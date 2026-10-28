@@ -167,8 +167,14 @@
       await renderWorkspace(session);
     } catch (error) {
       console.error('CIMAT: fallo de autenticacion', error.message);
-      notice('No fue posible iniciar sesion (' + error.message +
-        '). Verifica las credenciales y el acceso a Supabase.');
+      const msg = String(error.message || '');
+      if (/email.not.confirmed|email_not_confirmed/i.test(msg)) {
+        notice('Tu correo aún no está confirmado en Supabase. Confírmalo o pide a un administrador que verifique la cuenta antes de iniciar sesión.');
+      } else if (/invalid.login.credentials|invalid_credentials/i.test(msg)) {
+        notice('Correo o contraseña incorrectos. Comprueba que sean los registrados en Supabase.');
+      } else {
+        notice('No fue posible iniciar sesión (' + msg + ').');
+      }
       $('password').value = '';
     } finally {
       button.disabled = false;

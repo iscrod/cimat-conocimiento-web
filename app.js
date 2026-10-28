@@ -1,4 +1,31 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+// CIMAT v0.1.1: cargar Supabase desde fuentes alternativas y mostrar errores.
+const fuentesSupabase = [
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.95.2/+esm',
+  'https://esm.sh/@supabase/supabase-js@2.95.2',
+  'https://esm.run/@supabase/supabase-js@2.95.2'
+];
+let createClient = null;
+document.getElementById('notice').textContent = 'Cargando autenticación...';
+for (const fuente of fuentesSupabase) {
+  try {
+    const modulo = await import(fuente);
+    if (typeof modulo.createClient === 'function') {
+      createClient = modulo.createClient;
+      break;
+    }
+  } catch (error) {
+    console.warn('CIMAT: fuente de Supabase no disponible', fuente, error);
+  }
+}
+if (!createClient) {
+  document.getElementById('setup').classList.remove('hidden');
+  document.querySelector('#setup p').textContent =
+    'No se pudo cargar la biblioteca de autenticación. La red o el navegador puede estar bloqueando los servidores externos de JavaScript.';
+  document.getElementById('notice').textContent = 'Error: no fue posible cargar Supabase JS.';
+  throw new Error('No se pudo cargar Supabase JS desde ninguna fuente.');
+}
+document.getElementById('notice').textContent = '';
+
 const $ = id => document.getElementById(id);
 const config = window.CIMAT_CONFIG ?? {};
 const ready = /^https:\/\//.test(config.SUPABASE_URL || '') && /^(sb_publishable_|eyJ)/.test(config.SUPABASE_PUBLISHABLE_KEY || '');

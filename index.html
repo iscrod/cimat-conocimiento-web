@@ -1,7 +1,122 @@
 <!doctype html>
-<html lang="es"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="referrer" content="strict-origin-when-cross-origin"/><title>CIMAT | Gestión del conocimiento</title><link rel="stylesheet" href="styles.css"/></head>
-<body><main class="shell"><header><div><span class="tag">PROTOTIPO ACADÉMICO · V0.1.2</span><h1>Plataforma de extracción de conocimiento</h1><p>Gestión de empresas y evaluación de procesos de software</p></div><div class="mark">CIMAT</div></header>
-<section id="setup" class="card hidden"><h2>Configuración requerida</h2><p>Antes de publicar, completa <code>config.js</code> con la URL y la clave <strong>publishable</strong> de Supabase. Nunca uses <code>service_role</code> ni claves secretas.</p></section>
-<section id="login" class="card"><h2>Ingresar</h2><p>Acceso para usuarios previamente registrados en Supabase Auth.</p><form id="login-form"><label>Correo electrónico<input type="email" id="email" autocomplete="username" required/></label><label>Contraseña<input type="password" id="password" autocomplete="current-password" required/></label><button type="submit">Iniciar sesión</button></form></section>
-<section id="workspace" class="hidden"><nav><div id="identity">Sesión autenticada</div><button class="outline" id="logout">Cerrar sesión</button></nav><section class="grid"><article class="card"><h2>Mi perfil</h2><div id="profile">Cargando...</div></article><article class="card"><h2>Mis empresas</h2><div id="companies">Cargando...</div></article></section><article class="card"><h2>Informes consolidados aprobados</h2><p>Solo se muestran informes autorizados para la empresa. No se muestran entrevistas ni identidades individuales.</p><div id="reports">Cargando...</div></article><article class="card muted"><h2>Próximos módulos</h2><p>Entrevistas inteligentes, extracción de actividades, trazabilidad ISO/IEC 29110, diagramas BPMN y revisión por expertos.</p></article></section>
-<p id="notice" role="status" aria-live="polite"></p><footer>Investigación académica · No usar con información confidencial hasta completar la evaluación de seguridad.</footer></main><script src="config.js"></script><script src="app.js?v=0.1.2" defer></script></body></html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>CIMAT | Plataforma de extracción de conocimiento</title>
+  <link rel="stylesheet" href="styles.css?v=0.2.0">
+</head>
+<body>
+<main class="shell">
+  <header>
+    <div>
+      <span class="tag">PROTOTIPO ACADÉMICO · V0.2.0</span>
+      <h1>Plataforma de extracción de conocimiento</h1>
+      <p>Gestión organizacional y mejora de procesos de software · ISO/IEC 29110</p>
+    </div>
+    <div class="mark" aria-label="Identificador del proyecto">CIMAT</div>
+  </header>
+
+  <section id="setup" class="card hidden">
+    <h2>Configuración requerida</h2>
+    <p>Revisa la URL del proyecto y la clave pública en <code>config.js</code>. No publiques claves secretas.</p>
+  </section>
+
+  <section id="login" class="card">
+    <h2>Ingresar</h2>
+    <p>Acceso exclusivo para usuarios registrados en Supabase Auth.</p>
+    <form id="login-form">
+      <label>Correo electrónico <input type="email" id="email" autocomplete="username" required></label>
+      <label>Contraseña <input type="password" id="password" autocomplete="current-password" required></label>
+      <button type="submit">Iniciar sesión</button>
+    </form>
+  </section>
+
+  <section id="workspace" class="hidden">
+    <nav class="sessionbar" aria-label="Sesión">
+      <div><strong id="identity">Sesión autenticada</strong><small>Conexión segura con Supabase</small></div>
+      <button class="outline" id="logout" type="button">Cerrar sesión</button>
+    </nav>
+
+    <nav class="tabs" role="tablist" aria-label="Secciones del sistema">
+      <button type="button" class="tab active" data-view="resumen" role="tab" aria-selected="true">Resumen</button>
+      <button type="button" class="tab" data-view="empresas" role="tab" aria-selected="false">Mis empresas</button>
+      <button type="button" class="tab" data-view="informes" role="tab" aria-selected="false">Informes</button>
+      <button type="button" class="tab" data-view="perfil" role="tab" aria-selected="false">Mi perfil</button>
+    </nav>
+
+    <section data-panel="resumen" role="tabpanel">
+      <div class="section-heading">
+        <h2>Panel general</h2>
+        <p>Información visible únicamente según los permisos de tu cuenta.</p>
+      </div>
+      <section class="grid" aria-label="Resumen de actividad">
+        <article class="card metric">
+          <span class="metric-label">Organizaciones asignadas</span>
+          <strong id="company-count" class="metric-number">—</strong>
+          <span id="companies-preview" class="subtle">Consultando permisos...</span>
+        </article>
+        <article class="card metric">
+          <span class="metric-label">Informes consolidados aprobados</span>
+          <strong id="report-count" class="metric-number">—</strong>
+          <span class="subtle">Solo resultados revisados y autorizados</span>
+        </article>
+      </section>
+      <article class="card">
+        <h2>Estado de la plataforma</h2>
+        <div class="progress-steps">
+          <div><span class="done">✓</span><span>Base de datos PostgreSQL y autenticación</span></div>
+          <div><span class="done">✓</span><span>Empresas autorizadas e informes con RLS</span></div>
+          <div><span class="done">✓</span><span>Edición protegida del perfil personal</span></div>
+          <div><span class="pending">○</span><span>Gestión de organizaciones y roles administrativos</span></div>
+          <div><span class="pending">○</span><span>Entrevistas inteligentes, evaluación normativa y diagramas</span></div>
+        </div>
+      </article>
+      <article class="card info">
+        <h2>Confidencialidad de entrevistas · RF-SEG-01</h2>
+        <p>Los usuarios empresariales no tendrán acceso directo a identidades o respuestas individuales. Antes de activar entrevistas, validaremos permisos y controles contra la identificación indirecta.</p>
+      </article>
+    </section>
+
+    <section data-panel="empresas" class="hidden" role="tabpanel">
+      <article class="card">
+        <h2>Mis empresas</h2>
+        <p>Únicamente aparecen las organizaciones autorizadas para la cuenta actual.</p>
+        <div id="companies" aria-live="polite">Cargando...</div>
+      </article>
+      <article class="card muted">
+        <h2>Administración de empresas</h2>
+        <p>Alta de empresas, asignación de personal y roles: pendiente de habilitar para administradores autorizados. No se conceden privilegios automáticamente.</p>
+      </article>
+    </section>
+
+    <section data-panel="informes" class="hidden" role="tabpanel">
+      <article class="card">
+        <h2>Informes consolidados aprobados</h2>
+        <p>Solo se muestran informes autorizados, sin entrevistas ni identidades individuales.</p>
+        <div id="reports" aria-live="polite">Cargando...</div>
+      </article>
+    </section>
+
+    <section data-panel="perfil" class="hidden" role="tabpanel">
+      <article class="card">
+        <h2>Mi perfil</h2>
+        <p id="profile">Cargando...</p>
+        <form id="profile-form">
+          <label>Nombre <input type="text" id="profile-name" maxlength="150" autocomplete="given-name" placeholder="Tu nombre" required></label>
+          <label>Apellidos <input type="text" id="profile-surname" maxlength="150" autocomplete="family-name" placeholder="Tus apellidos" required></label>
+          <button type="submit">Guardar perfil</button>
+        </form>
+        <p id="profile-status" class="form-status" role="status" aria-live="polite"></p>
+        <p class="subtle">No puedes modificar tu identificador, tu empresa ni tus permisos desde esta sección.</p>
+      </article>
+    </section>
+  </section>
+  <p id="notice" role="status" aria-live="polite"></p>
+  <footer>Investigación académica · Utilizar solo información ficticia hasta concluir las pruebas de privacidad y seguridad.</footer>
+</main>
+<script src="config.js"></script>
+<script src="app.js?v=0.2.0" defer></script>
+</body>
+</html>

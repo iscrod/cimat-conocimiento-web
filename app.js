@@ -1,4 +1,4 @@
-/* CIMAT Web v0.1.2 - prototipo sin dependencias externas de JavaScript.
+/* CIMAT Web v0.2.0 - prototipo sin dependencias externas de JavaScript.
  * API de autenticacion Supabase Auth y consultas PostgREST.
  * Solo utiliza clave PUBLICA y JWT del usuario; RLS protege los datos.
  * La sesion se conserva temporalmente en sessionStorage, no en GitHub.
@@ -33,6 +33,7 @@
     const headers = { 'apikey': key, 'Accept': 'application/json' };
     if (opts.token) headers.Authorization = 'Bearer ' + opts.token;
     if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (opts.prefer) headers['Prefer'] = opts.prefer;
 
     const response = await fetch(root + path, {
       method: opts.method || 'GET',
@@ -92,6 +93,10 @@
     $('profile').textContent = 'Cargando...';
     $('companies').textContent = 'Cargando...';
     $('reports').textContent = 'Cargando...';
+    $('company-count').textContent = '—';
+    $('report-count').textContent = '—';
+    $('companies-preview').textContent = 'Consultando permisos...';
+    $('profile-status').textContent = '';
     notice('');
 
     const queries = [
@@ -108,30 +113,60 @@
       const profile = results[0].value[0];
       $('profile').textContent = profile
         ? ([profile.nombre, profile.apellidos].filter(Boolean).join(' ') || 'Perfil registrado sin nombre')
-        : 'No se encontro un perfil visible.';
+        : 'No se encontró un perfil visible.';
+      $('profile-name').value = profile?.nombre || '';
+      $('profile-surname').value = profile?.apellidos || '';
+      $('profile-form').querySelector('button').disabled = !profile;
     } else {
-      $('profile').textContent = 'No fue posible consultar el perfil. Revisa permisos o conexion.';
+      $('profile').textContent = 'No fue posible consultar el perfil: revisa los permisos.';
+      $('profile-form').querySelector('button').disabled = true;
     }
 
     if (results[1].status === 'fulfilled') {
-      renderList('companies', results[1].value, function (e) {
+      const companies = results[1].value;
+      $('company-count').textContent = String(companies.length);
+      $('companies-preview').textContent = companies.length
+        ? companies.map((e) => e.nombre).join(' · ')
+        : 'No tienes empresas asignadas.';
+      renderList('companies', companies, function (e) {
         return '<div class="item"><strong>' + escapeHTML(e.nombre) +
           '</strong><p>' + escapeHTML(e.sector) + ' · ' +
           escapeHTML(e.estado) + '</p></div>';
       }, 'No hay empresas asignadas a este usuario.');
     } else {
+      $('company-count').textContent = '—';
+      $('companies-preview').textContent = 'Consulta restringida.';
       $('companies').textContent = 'No fue posible consultar las empresas. Revisa los permisos RLS.';
     }
 
     if (results[2].status === 'fulfilled') {
-      renderList('reports', results[2].value, function (r) {
+      const reports = results[2].value;
+      $('report-count').textContent = String(reports.length);
+      renderList('reports', reports, function (r) {
         return '<div class="item"><strong>' + escapeHTML(r.titulo) +
           '</strong><p>' + escapeHTML(r.resumen_consolidado) + '</p></div>';
-      }, 'Todavia no hay informes aprobados para esta cuenta.');
+      }, 'Todavía no hay informes aprobados para esta cuenta.');
     } else {
-      $('reports').textContent = 'Informes no disponibles: consulta restringida o error de conexion.';
+      $('report-count').textContent = '—';
+      $('reports').textContent = 'Informes no disponibles: consulta restringida o error de conexión.';
     }
   }
+
+  // El cambio de pestaña modifica solamente la presentación, nunca los permisos.
+  document.querySelectorAll('.tabs [data-view]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      const selected = button.dataset.view;
+      document.querySelectorAll('.tabs [data-view]').forEach(function (item) {
+        const active = item.dataset.view === selected;
+        item.classList.toggle('active', active);
+        item.setAttribute('aria-selected', String(active));
+      });
+      document.querySelectorAll('[data-panel]').forEach(function (panel) {
+        panel.classList.toggle('hidden', panel.dataset.panel !== selected);
+      });
+    });
+  });
+
 
   const validConfig = /^https:\/\/[a-z0-9.-]+$/i.test(root) &&
                       /^(sb_publishable_|eyJ)/.test(key);
@@ -142,6 +177,52 @@
     notice('Falta configurar la URL o la clave publica de Supabase.');
     return;
   }
+
+  $('profile-form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    if (!currentSession || Date.now() >= currentSession.expires_at) {
+      $('profile-status').classList.add('error');
+      $('profile-status').textContent = 'Tu sesión ha caducado. Cierra sesión y vuelve a ingresar.';
+      return;
+    }
+
+    const name = $('profile-name').value.trim();
+    const surname = $('profile-surname').value.trim();
+    const status = $('profile-status');
+    const button = $('profile-form').querySelector('button[type="submit"]');
+    status.classList.remove('error');
+
+    if (!name || !surname || name.length > 150 || surname.length > 150) {
+      status.classList.add('error');
+      status.textContent = 'Escribe un nombre y apellidos válidos.';
+      return;
+    }
+
+    button.disabled = true;
+    status.textContent = 'Guardando perfil...';
+    try {
+      const updated = await api(
+        '/rest/v1/perfiles?id=eq.' + encodeURIComponent(currentSession.user.id) +
+        '&select=nombre,apellidos',
+        {
+          method: 'PATCH',
+          token: currentSession.access_token,
+          prefer: 'return=representation',
+          body: { nombre: name, apellidos: surname }
+        }
+      );
+      if (!Array.isArray(updated) || updated.length !== 1) {
+        throw new Error('La actualización no fue aplicada por las políticas de seguridad.');
+      }
+      $('profile').textContent = [updated[0].nombre, updated[0].apellidos].filter(Boolean).join(' ');
+      status.textContent = 'Perfil actualizado correctamente.';
+    } catch (error) {
+      status.classList.add('error');
+      status.textContent = 'No se pudo guardar: ' + String(error.message || 'Error desconocido');
+    } finally {
+      button.disabled = false;
+    }
+  });
 
   // El formulario ya es visible por defecto en index.html.
   $('login-form').addEventListener('submit', async function (event) {

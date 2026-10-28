@@ -1,25 +1,45 @@
-# CIMAT - Aplicación web 0.1
+# CIMAT — Plataforma web v0.2.0
 
-Prototipo estático (sin servidor Node ni compilación) con acceso Supabase Auth, consulta de perfil, empresas autorizadas e informes consolidados aprobados.
+Prototipo académico para la extracción de conocimiento y mejora de procesos de software, con referencia a ISO/IEC 29110.
 
-## Pasos para publicar
-1. Crea un repositorio de GitHub para el prototipo. No subas claves privadas, datos reales ni información confidencial.
-2. Sube los archivos de esta carpeta (NO el ZIP directamente).
-3. En Supabase -> Project Settings -> API Keys copia únicamente la clave **publishable** (`sb_publishable_...`). Copia la Project URL desde Project Settings.
-4. Edita `config.js` con esos dos valores. La URL y la clave publishable son credenciales públicas; la seguridad depende de RLS y los permisos SQL. **Jamás** pegar `service_role`, `sb_secret_...` o contraseña de PostgreSQL.
-5. En GitHub: Settings -> Pages -> Deploy from a branch -> main -> /(root). Esto publica el prototipo bajo https://USUARIO.github.io/REPOSITORIO/.
-6. En Supabase: Authentication -> URL Configuration, añade la URL publicada a las Redirect URLs. Revisa Site URL si utilizarás confirmación o recuperación de contraseñas.
-7. Inicia sesión con el usuario de prueba que ya creaste.
+## Estado funcional
 
-## Restricciones
-- El sistema NO ofrece registro público, administración, entrevistas ni edición: son siguientes etapas.
-- `informes_empresa` debe mantener su política de acceso y solo contener contenido revisado y autorizado, sin datos que permitan reidentificar personas.
-- La app usa un módulo JavaScript de CDN; se necesita Internet para cargarlo. Más adelante se sustituirá por dependencia empaquetada y bloqueada con lockfile antes de producción.
-- Para pruebas académicas sin datos personales reales. Revisa permisos y políticas con varios usuarios antes de cualquier uso con empresas reales.
-- Si un usuario inicia sesión y ve 'Sin permiso', esto NO se soluciona desactivando RLS: se revisan grants y políticas específicas.
+- Inicio de sesión con correo y contraseña usando Supabase Auth.
+- Consulta de organizaciones asignadas mediante PostgreSQL y Row Level Security (RLS).
+- Consulta únicamente de informes consolidados que estén autorizados por la base de datos.
+- Panel web con secciones Resumen, Mis empresas, Informes y Mi perfil.
+- Edición del nombre y los apellidos propios mediante UPDATE a la tabla `perfiles`, sujeta a permisos por columna y política RLS.
+- Se conserva el almacenamiento temporal de la sesión en `sessionStorage`; en esta versión no se renuevan automáticamente los tokens.
 
-Fuentes oficiales:
-https://supabase.com/docs/guides/auth
-https://supabase.com/docs/guides/database/postgres/row-level-security
-https://supabase.com/docs/guides/api/securing-your-api
-https://docs.github.com/en/pages
+## Pendiente de desarrollo
+
+- Panel administrativo para altas y cambios de empresas, usuarios y roles (no habilitado todavía).
+- Entrevistas, cuestionarios, integración de IA, extracción de conocimiento, trazabilidad y diagramas.
+- Revisión de seguridad integral con varias cuentas y pruebas de confidencialidad de entrevistados.
+- Procesos de recuperación de contraseña, administración de sesiones y registro de auditoría de la interfaz.
+
+## Seguridad y privacidad
+
+- El sitio público contiene solamente una clave **publishable** y la URL de Supabase.
+- Nunca publicar contraseñas de PostgreSQL, claves `sb_secret_...`, `service_role`, tokens de usuario ni archivos privados.
+- Las consultas están controladas por grants y políticas RLS en Supabase: ocultar un elemento visual no otorga ni quita permisos reales.
+- RF-SEG-01: el rol Empresa no podrá ver nombres ni respuestas individuales de los entrevistados. Antes de habilitar datos reales hay que evaluar también la reidentificación indirecta en informes.
+- Nunca usar información confidencial ni personal real para pruebas del prototipo sin evaluación y autorización previas.
+- Si la sesión caduca, cerrar sesión e iniciar nuevamente. No se ha implementado renovación automática.
+
+## Implementación
+
+- `index.html`: estructura de pantallas.
+- `styles.css`: presentación adaptable.
+- `app.js`: autenticación y consultas REST a Supabase.
+- `config.js`: URL y clave pública del proyecto.
+- Sin servidor Node.js propio ni bibliotecas JavaScript de terceros para el frontend inicial.
+- Publicación: GitHub Pages, rama `main`, carpeta `/(root)`.
+
+## Fuentes oficiales
+
+- [Supabase Auth](https://supabase.com/docs/guides/auth)
+- [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security)
+- [Permisos por columna](https://supabase.com/docs/guides/database/postgres/column-level-security)
+- [Seguridad de Data API](https://supabase.com/docs/guides/api/securing-your-api)
+- [GitHub Pages](https://docs.github.com/en/pages)

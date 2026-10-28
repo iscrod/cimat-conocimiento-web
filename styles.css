@@ -26,3 +26,15 @@
 #profile-form{max-width:540px}
 #companies .item,#reports .item{overflow-wrap:anywhere}
 @media(max-width:680px){.tabs{gap:4px}.tabs .tab{flex:1 1 43%;padding:10px 8px}.metric{min-height:125px}.sessionbar{align-items:flex-start}}
+
+/* CIMAT v0.3 - Formularios y controles administrativos */
+select,textarea{width:100%;margin-top:8px;padding:13px 12px;border:1px solid #b9c7d7;border-radius:8px;font-size:16px;background:#fff;color:inherit;font-family:inherit}
+textarea{resize:vertical;min-height:85px;line-height:1.5}
+select:focus-visible,textarea:focus-visible{outline:3px solid #4ba6b5;outline-offset:2px}
+.compact-grid{gap:5px 20px}
+.checkline{display:flex;align-items:center;gap:10px;margin:20px 0}
+.checkline input{width:auto;margin:0;min-width:18px;height:18px}
+.form-actions{display:flex;gap:10px;flex-wrap:wrap}
+button:disabled{opacity:.55;cursor:not-allowed}
+#company-status{margin-top:15px;white-space:normal}
+@media(max-width:680px){.compact-grid{grid-template-columns:1fr}.tabs .tab{flex:1 1 29%;font-size:13px}}

@@ -1,63 +1,201 @@
-// CIMAT v0.1.1: cargar Supabase desde fuentes alternativas y mostrar errores.
-const fuentesSupabase = [
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.95.2/+esm',
-  'https://esm.sh/@supabase/supabase-js@2.95.2',
-  'https://esm.run/@supabase/supabase-js@2.95.2'
-];
-let createClient = null;
-document.getElementById('notice').textContent = 'Cargando autenticación...';
-for (const fuente of fuentesSupabase) {
-  try {
-    const modulo = await import(fuente);
-    if (typeof modulo.createClient === 'function') {
-      createClient = modulo.createClient;
-      break;
-    }
-  } catch (error) {
-    console.warn('CIMAT: fuente de Supabase no disponible', fuente, error);
-  }
-}
-if (!createClient) {
-  document.getElementById('setup').classList.remove('hidden');
-  document.querySelector('#setup p').textContent =
-    'No se pudo cargar la biblioteca de autenticación. La red o el navegador puede estar bloqueando los servidores externos de JavaScript.';
-  document.getElementById('notice').textContent = 'Error: no fue posible cargar Supabase JS.';
-  throw new Error('No se pudo cargar Supabase JS desde ninguna fuente.');
-}
-document.getElementById('notice').textContent = '';
+/* CIMAT Web v0.1.2 - prototipo sin dependencias externas de JavaScript.
+ * API de autenticacion Supabase Auth y consultas PostgREST.
+ * Solo utiliza clave PUBLICA y JWT del usuario; RLS protege los datos.
+ * La sesion se conserva temporalmente en sessionStorage, no en GitHub.
+ */
+(function () {
+  'use strict';
 
-const $ = id => document.getElementById(id);
-const config = window.CIMAT_CONFIG ?? {};
-const ready = /^https:\/\//.test(config.SUPABASE_URL || '') && /^(sb_publishable_|eyJ)/.test(config.SUPABASE_PUBLISHABLE_KEY || '');
-const show = (id, yes) => $(id).classList.toggle('hidden', !yes);
-const notify = message => { $('notice').textContent = message || ''; };
-const safe = value => String(value ?? '').replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-let supabase;
-if (!ready) { show('setup',true); }
-else {
-  supabase = createClient(config.SUPABASE_URL,config.SUPABASE_PUBLISHABLE_KEY);
-  $('login-form').addEventListener('submit',async event=>{
-    event.preventDefault();notify('');
-    const {error}=await supabase.auth.signInWithPassword({email:$('email').value,password:$('password').value});
-    $('password').value='';
-    if(error)notify('No se pudo iniciar sesión. Verifica tus credenciales.');
+  const $ = (id) => document.getElementById(id);
+  const config = window.CIMAT_CONFIG || {};
+  const root = String(config.SUPABASE_URL || '').replace(/\/+$/, '');
+  const key = String(config.SUPABASE_PUBLISHABLE_KEY || '');
+  const storageKey = 'cimat_v012_sesion';
+  let currentSession = null;
+
+  function visible(id, yes) {
+    const element = $(id);
+    if (element) element.classList.toggle('hidden', !yes);
+  }
+
+  function notice(message) {
+    $('notice').textContent = message || '';
+  }
+
+  function escapeHTML(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+    });
+  }
+
+  async function api(path, options) {
+    const opts = options || {};
+    const headers = { 'apikey': key, 'Accept': 'application/json' };
+    if (opts.token) headers.Authorization = 'Bearer ' + opts.token;
+    if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+
+    const response = await fetch(root + path, {
+      method: opts.method || 'GET',
+      headers: headers,
+      body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
+      cache: 'no-store'
+    });
+
+    const raw = await response.text();
+    let data = {};
+    if (raw) {
+      try { data = JSON.parse(raw); } catch (_) { data = {}; }
+    }
+    if (!response.ok) {
+      const detail = data.error_description || data.msg || data.message || '';
+      throw new Error('HTTP ' + response.status + (detail ? ': ' + detail : ''));
+    }
+    return data;
+  }
+
+  function readSession() {
+    try {
+      const stored = sessionStorage.getItem(storageKey);
+      if (!stored) return null;
+      const session = JSON.parse(stored);
+      if (session && session.access_token && session.user && session.user.id &&
+          Date.now() < session.expires_at) return session;
+    } catch (_) {}
+    return null;
+  }
+
+  function saveSession(session) {
+    currentSession = session;
+    try { sessionStorage.setItem(storageKey, JSON.stringify(session)); } catch (_) {}
+  }
+
+  function clearSession() {
+    currentSession = null;
+    try { sessionStorage.removeItem(storageKey); } catch (_) {}
+  }
+
+  function showLogin() {
+    visible('login', true);
+    visible('workspace', false);
+    $('password').value = '';
+  }
+
+  function renderList(id, rows, template, emptyMessage) {
+    $(id).innerHTML = rows.length ? rows.map(template).join('') : escapeHTML(emptyMessage);
+  }
+
+  async function renderWorkspace(session) {
+    visible('login', false);
+    visible('setup', false);
+    visible('workspace', true);
+    $('identity').textContent = session.user.email || 'Usuario autenticado';
+    $('profile').textContent = 'Cargando...';
+    $('companies').textContent = 'Cargando...';
+    $('reports').textContent = 'Cargando...';
+    notice('');
+
+    const queries = [
+      '/rest/v1/perfiles?select=nombre,apellidos,fecha_registro&id=eq.' +
+        encodeURIComponent(session.user.id) + '&limit=1',
+      '/rest/v1/empresas?select=id,nombre,sector,estado&order=nombre.asc',
+      '/rest/v1/informes_empresa?select=id,titulo,resumen_consolidado,participantes_grupo,empresa_id&order=creado_en.desc&limit=30'
+    ];
+    const results = await Promise.allSettled(
+      queries.map((url) => api(url, { token: session.access_token }))
+    );
+
+    if (results[0].status === 'fulfilled') {
+      const profile = results[0].value[0];
+      $('profile').textContent = profile
+        ? ([profile.nombre, profile.apellidos].filter(Boolean).join(' ') || 'Perfil registrado sin nombre')
+        : 'No se encontro un perfil visible.';
+    } else {
+      $('profile').textContent = 'No fue posible consultar el perfil. Revisa permisos o conexion.';
+    }
+
+    if (results[1].status === 'fulfilled') {
+      renderList('companies', results[1].value, function (e) {
+        return '<div class="item"><strong>' + escapeHTML(e.nombre) +
+          '</strong><p>' + escapeHTML(e.sector) + ' · ' +
+          escapeHTML(e.estado) + '</p></div>';
+      }, 'No hay empresas asignadas a este usuario.');
+    } else {
+      $('companies').textContent = 'No fue posible consultar las empresas. Revisa los permisos RLS.';
+    }
+
+    if (results[2].status === 'fulfilled') {
+      renderList('reports', results[2].value, function (r) {
+        return '<div class="item"><strong>' + escapeHTML(r.titulo) +
+          '</strong><p>' + escapeHTML(r.resumen_consolidado) + '</p></div>';
+      }, 'Todavia no hay informes aprobados para esta cuenta.');
+    } else {
+      $('reports').textContent = 'Informes no disponibles: consulta restringida o error de conexion.';
+    }
+  }
+
+  const validConfig = /^https:\/\/[a-z0-9.-]+$/i.test(root) &&
+                      /^(sb_publishable_|eyJ)/.test(key);
+
+  if (!validConfig) {
+    visible('setup', true);
+    visible('login', false);
+    notice('Falta configurar la URL o la clave publica de Supabase.');
+    return;
+  }
+
+  // El formulario ya es visible por defecto en index.html.
+  $('login-form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const button = $('login-form').querySelector('button[type="submit"]');
+    button.disabled = true;
+    notice('Comprobando credenciales...');
+    try {
+      const response = await api('/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        body: { email: $('email').value.trim(), password: $('password').value }
+      });
+      if (!response.access_token || !response.user || !response.user.id) {
+        throw new Error('Respuesta de autenticacion incompleta.');
+      }
+      const session = {
+        access_token: response.access_token,
+        user: { id: response.user.id, email: response.user.email },
+        expires_at: Date.now() + Math.max(60, (response.expires_in || 3600) - 60) * 1000
+      };
+      saveSession(session);
+      $('password').value = '';
+      await renderWorkspace(session);
+    } catch (error) {
+      console.error('CIMAT: fallo de autenticacion', error.message);
+      notice('No fue posible iniciar sesion (' + error.message +
+        '). Verifica las credenciales y el acceso a Supabase.');
+      $('password').value = '';
+    } finally {
+      button.disabled = false;
+    }
   });
-  $('logout').addEventListener('click',async()=>{await supabase.auth.signOut();});
-  supabase.auth.onAuthStateChange((_event,session)=>{window.setTimeout(()=>render(session),0);});
-  supabase.auth.getSession().then(({data})=>render(data.session)).catch(()=>notify('No se pudo comprobar la sesión.'));
-}
-async function render(session){
-  show('login',!session);show('workspace',!!session);notify('');
-  if(!session)return;
-  $('identity').textContent=session.user.email ?? 'Usuario';
-  const [profile, companies, reports]=await Promise.all([
-    supabase.from('perfiles').select('nombre,apellidos,fecha_registro').eq('id',session.user.id).maybeSingle(),
-    supabase.from('empresas').select('id,nombre,sector,estado').order('nombre'),
-    supabase.from('informes_empresa').select('id,titulo,resumen_consolidado,participantes_grupo,empresa_id').order('creado_en',{ascending:false}).limit(30)
-  ]);
-  $('profile').textContent=profile.error?'Sin permiso para consultar el perfil.':profile.data?[profile.data.nombre,profile.data.apellidos].filter(Boolean).join(' ')||'Perfil sin nombre configurado':'Perfil no disponible';
-  if(companies.error){$('companies').textContent='No se pudo consultar empresas: revisa permisos RLS.';}
-  else {$('companies').innerHTML=companies.data.length?companies.data.map(e=>`<div class="item"><strong>${safe(e.nombre)}</strong><p>${safe(e.sector)} · ${safe(e.estado)}</p></div>`).join(''):'No hay empresas disponibles para este usuario.';}
-  if(reports.error){$('reports').textContent='Informes no disponibles: acceso restringido o falta configurar permisos.';}
-  else {$('reports').innerHTML=reports.data.length?reports.data.map(r=>`<div class="item"><strong>${safe(r.titulo)}</strong><p>${safe(r.resumen_consolidado)}</p></div>`).join(''):'No existen informes aprobados visibles para esta cuenta.';}
-}
+
+  $('logout').addEventListener('click', async function () {
+    const token = currentSession && currentSession.access_token;
+    clearSession();
+    showLogin();
+    notice('Sesion cerrada.');
+    if (token) {
+      try { await api('/auth/v1/logout', { method: 'POST', token: token }); }
+      catch (_) { /* La sesion del navegador ya se elimino. */ }
+    }
+  });
+
+  const existingSession = readSession();
+  if (existingSession) {
+    currentSession = existingSession;
+    renderWorkspace(existingSession).catch(function (error) {
+      clearSession();
+      showLogin();
+      notice('La sesion anterior no pudo recuperarse: ' + error.message);
+    });
+  } else {
+    clearSession();
+    showLogin();
+  }
+})();

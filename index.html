@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>CIMAT | Plataforma de extracción de conocimiento</title>
-  <link rel="stylesheet" href="styles.css?v=0.4.0">
+  <link rel="stylesheet" href="styles.css?v=0.5.0">
 </head>
 <body>
 <main class="shell">
   <header>
     <div>
-      <span class="tag">PROTOTIPO ACADÉMICO · V0.4.0</span>
+      <span class="tag">PROTOTIPO ACADÉMICO · V0.5.0</span>
       <h1>Plataforma de extracción de conocimiento</h1>
       <p>Gestión organizacional y mejora de procesos de software · ISO/IEC 29110</p>
     </div>
@@ -21,6 +21,18 @@
   <section id="setup" class="card hidden">
     <h2>Configuración requerida</h2>
     <p>Revisa la URL del proyecto y la clave pública en <code>config.js</code>. No publiques claves secretas.</p>
+  </section>
+
+  <section id="invite-accept" class="card hidden">
+    <h2>Completar invitación a CIMAT</h2>
+    <p>Tu dirección de correo fue verificada mediante el enlace de invitación. Define una contraseña para acceder a la plataforma.</p>
+    <form id="invite-password-form">
+      <label>Nueva contraseña <input type="password" id="invite-password" autocomplete="new-password" minlength="12" required></label>
+      <label>Confirmar contraseña <input type="password" id="invite-password-confirm" autocomplete="new-password" minlength="12" required></label>
+      <button type="submit" id="invite-password-save">Establecer contraseña</button>
+    </form>
+    <p class="subtle">Recomendación: al menos 12 caracteres. No compartas los enlaces de invitación.</p>
+    <p id="invite-accept-status" class="form-status" role="status" aria-live="polite"></p>
   </section>
 
   <section id="login" class="card">
@@ -166,10 +178,30 @@
         <p id="company-status" class="form-status" role="status"></p>
       </article>
 
+      <article id="admin-invite-controls" class="card hidden">
+        <h2>Invitar un participante</h2>
+        <p>Se enviará un correo para establecer contraseña. Al aceptar la invitación, podrás asignarle empresa y rol desde el directorio de usuarios.</p>
+        <form id="invite-form">
+          <label>Correo electrónico
+            <input type="email" id="invite-email" autocomplete="off" required maxlength="254" placeholder="persona@organizacion.mx">
+          </label>
+          <div class="grid compact-grid">
+            <label>Nombre
+              <input type="text" id="invite-name" maxlength="100" required placeholder="Nombre">
+            </label>
+            <label>Apellidos
+              <input type="text" id="invite-surname" maxlength="150" required placeholder="Apellidos">
+            </label>
+          </div>
+          <button type="submit" id="invite-send">Enviar invitación</button>
+        </form>
+        <p id="invite-status" class="form-status" role="status" aria-live="polite"></p>
+        <p class="subtle">No introduzcas direcciones de personas reales sin su autorización durante las pruebas académicas.</p>
+      </article>
       <article id="admin-users-controls" class="card hidden">
         <h2>Usuarios y roles por empresa</h2>
         <p>Administra las asignaciones de usuarios ya registrados. Solo un administrador global puede ver este directorio y sus nombres.</p>
-        <p class="subtle">Para crear una cuenta nueva, utiliza <a href="https://supabase.com/dashboard/project/hqsmlvoftdlnvjzkzesp/auth/users" target="_blank" rel="noopener noreferrer">Supabase → Authentication → Users</a>. Después regresa aquí para asignar su función.</p>
+        <p class="subtle">Puedes invitar cuentas desde el formulario anterior. Para crear una cuenta manualmente también está disponible <a href="https://supabase.com/dashboard/project/hqsmlvoftdlnvjzkzesp/auth/users" target="_blank" rel="noopener noreferrer">Supabase Auth</a>.</p>
         <form id="role-form">
           <label>Cuenta registrada
             <select id="role-user" required>
@@ -213,6 +245,6 @@
   <footer>Investigación académica · Utilizar solo información ficticia hasta concluir las pruebas de privacidad y seguridad.</footer>
 </main>
 <script src="config.js"></script>
-<script src="app.js?v=0.4.0" defer></script>
+<script src="app.js?v=0.5.0" defer></script>
 </body>
 </html>

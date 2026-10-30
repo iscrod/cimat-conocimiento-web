@@ -1,4 +1,34 @@
-# CIMAT — Plataforma web v0.6.0
+# CIMAT — Plataforma web v0.7.0
+
+## Extracción documental y revisión de encabezados (nuevo)
+
+Esta entrega introduce la primera fase del procesador documental, de forma **general**: sirve como base para normas y otras metodologías, sin programar las preguntas exclusivamente para ISO/IEC 29110.
+
+1. En **Biblioteca → Procesar y revisar documentos**, seleccionar un documento PDF ya cargado.
+2. Pulsar **Procesar PDF**. La Edge Function \`cimat-procesar-documento\` verifica la sesión y el permiso de administrador global, descarga el documento de Storage privado, verifica la huella SHA-256, extrae texto con \`unpdf@1.8.1\` y registra cada página en \`documento_paginas\`.
+3. El motor detecta encabezados **candidatos**, principalmente de numeración decimal y algunos identificadores abreviados. Los almacena en \`documento_secciones\` asociados con la página PDF de origen.
+4. El responsable revisa el texto original por página, puede corregir el título e indicar **Aprobado, Descartado o Pendiente**. La función \`revisar_seccion\` valida administrativamente cada cambio y registra auditoría.
+5. El resumen de extracción se conserva en \`documento_analisis\`. El sistema no recalcula automáticamente un documento ya procesado, para no sobrescribir revisiones existentes.
+
+### Restricciones de esta fase
+
+- El analizador inicial admite **solo PDF** de hasta **4 MB y 200 páginas**; el módulo de carga sigue admitiendo PDF, DOCX y TXT de hasta 20 MB. Se ampliará en versiones siguientes.
+- No incluye OCR, identificación semántica con IA, clasificación definitiva de procesos/actividades/tareas ni evaluación automática de conformidad.
+- Los encabezados propuestos no son evidencia normativa validada; pueden contener falsos positivos u omisiones. Cada referencia de página debe cotejarse con el PDF.
+- Los textos y las revisiones son **privados** y accesibles únicamente para administración global por RLS. El rol Empresa no tiene acceso.
+- **Prueba pendiente:** ejecutar el procesamiento del PDF real con una sesión administrativa desde la página web; el despliegue, las tablas, la sintaxis y las políticas ya fueron comprobados, pero la extracción de ese archivo todavía no se ha validado de extremo a extremo.
+- No cargar documentos sin derechos de almacenamiento y procesamiento autorizados.
+- La biblioteca y las revisiones no alteran las entrevistas ni los informes empresariales existentes.
+
+### Fuentes y componentes
+
+- Supabase Storage privado y RLS: https://supabase.com/docs/guides/storage y https://supabase.com/docs/guides/database/postgres/row-level-security
+- Edge Functions: https://supabase.com/docs/guides/functions
+- UnPDF (extracción de texto, biblioteca de código abierto): https://github.com/unjs/unpdf
+
+---
+
+# CIMAT — Archivo de avances v0.6.0
 
 ## Biblioteca de conocimiento (nuevo)
 

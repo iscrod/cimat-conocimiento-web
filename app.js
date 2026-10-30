@@ -1,4 +1,4 @@
-/* CIMAT Web v0.5.0 - prototipo sin dependencias externas de JavaScript.
+/* CIMAT Web v0.6.0 - prototipo sin dependencias externas de JavaScript.
  * API de autenticacion Supabase Auth y consultas PostgREST.
  * Solo utiliza clave PUBLICA y JWT del usuario; RLS protege los datos.
  * La sesion se conserva temporalmente en sessionStorage, no en GitHub.
@@ -14,6 +14,8 @@
   let currentSession = null;
   let adminCompanies = [];
   let adminUsers = [];
+  let bibliotecaDominios = [];
+  let bibliotecaDocumentos = [];
   const inviteParams = new URLSearchParams(window.location.hash.slice(1));
   let pendingInviteToken = inviteParams.get('type') === 'invite' ? inviteParams.get('access_token') : null;
   if (pendingInviteToken) window.history.replaceState(null, '', window.location.pathname + window.location.search);
@@ -182,6 +184,8 @@
     const controls = $('admin-controls');
     controls.classList.add('hidden');
     $('admin-invite-controls').classList.add('hidden');
+    $('biblioteca-controles').classList.add('hidden');
+    $('biblioteca-estado').textContent = 'Solo el administrador global puede gestionar documentos.';
     $('admin-users-controls').classList.add('hidden');
     status.textContent = 'Comprobando autorización...';
     adminCompanies = [];
@@ -203,6 +207,7 @@
       $('admin-invite-controls').classList.remove('hidden');
       status.textContent = 'Acceso administrativo autorizado. Organizaciones registradas: ' + companies.length + '.';
       await loadAdminUsers(session);
+      await cargarBiblioteca(session);
     } catch (error) {
       status.textContent = 'No fue posible comprobar el permiso administrativo: ' +
         String(error.message || 'Error desconocido');
@@ -542,6 +547,254 @@
     } finally {
       button.disabled = false;
     }
+  });
+
+
+  // CIMAT 0.6: biblioteca documental con lectura exclusiva del administrador.
+  function validarSesionBiblioteca() {
+    if (!currentSession || Date.now() >= currentSession.expires_at) {
+      throw new Error('Sesión caducada. Cierra sesión y vuelve a entrar.');
+    }
+    return currentSession;
+  }
+
+  function renderizarBiblioteca() {
+    const dominioSelect = $('documento-dominio');
+    const previo = dominioSelect.value;
+    dominioSelect.replaceChildren();
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Selecciona un dominio';
+    dominioSelect.append(defaultOption);
+
+    const empresaSelect = $('dominio-empresa');
+    empresaSelect.replaceChildren();
+    const general = document.createElement('option');
+    general.value = '';
+    general.textContent = 'General / compartido';
+    empresaSelect.append(general);
+    adminCompanies.forEach(function (empresa) {
+      const opt = document.createElement('option');
+      opt.value = empresa.id;
+      opt.textContent = empresa.nombre;
+      empresaSelect.append(opt);
+    });
+
+    bibliotecaDominios.forEach(function (dominio) {
+      const opt = document.createElement('option');
+      opt.value = dominio.id;
+      opt.textContent = dominio.titulo + ' · ' + (dominio.edicion || 'Sin edición');
+      dominioSelect.append(opt);
+    });
+    if (bibliotecaDominios.some(d => d.id === previo)) dominioSelect.value = previo;
+
+    $('dominio-lista').innerHTML = bibliotecaDominios.length
+      ? bibliotecaDominios.map(function (d) {
+          const empresa = adminCompanies.find((e) => e.id === d.empresa_id);
+          const ambito = empresa ? empresa.nombre : 'General';
+          return '<div class="item"><strong>' + escapeHTML(d.titulo) +
+            '</strong><p>' + escapeHTML(d.tipo) +
+            ' · Edición: ' + escapeHTML(d.edicion || 'No indicada') +
+            ' · ' + escapeHTML(ambito) +
+            ' · Estado: ' + escapeHTML(d.estado) + '</p></div>';
+        }).join('')
+      : 'No se han registrado dominios todavía.';
+
+    $('documento-lista').innerHTML = bibliotecaDocumentos.length
+      ? bibliotecaDocumentos.map(function (doc) {
+          const dominio = bibliotecaDominios.find(d => d.id === doc.dominio_id);
+          const sizeKB = Math.ceil(doc.tamano_bytes / 1024);
+          return '<div class="item biblioteca-doc">' +
+            '<div><strong>' + escapeHTML(doc.nombre_original) + '</strong>' +
+            '<p>' + escapeHTML(dominio?.titulo || 'Dominio no disponible') +
+            ' · ' + sizeKB + ' KB</p></div>' +
+            '<button type="button" class="outline biblioteca-descarga" data-doc="' +
+            escapeHTML(doc.id) + '">Descargar</button></div>';
+        }).join('')
+      : 'No existen documentos asociados.';
+  }
+
+  async function cargarBiblioteca(session) {
+    const estado = $('biblioteca-estado');
+    $('biblioteca-controles').classList.add('hidden');
+    estado.classList.remove('error');
+    estado.textContent = 'Consultando biblioteca privada...';
+    try {
+      const results = await Promise.all([
+        api('/rest/v1/dominios_conocimiento?select=id,tipo,titulo,codigo,edicion,referencia_oficial,descripcion,empresa_id,estado,creado_en&order=creado_en.desc&limit=200',
+          {token:session.access_token}),
+        api('/rest/v1/documentos_dominio?select=id,dominio_id,nombre_original,ruta_storage,tipo_mime,tamano_bytes,cargado_en&order=cargado_en.desc&limit=200',
+          {token:session.access_token})
+      ]);
+      if(!currentSession || session.user.id !== currentSession.user.id) return;
+      bibliotecaDominios = results[0];
+      bibliotecaDocumentos = results[1];
+      renderizarBiblioteca();
+      $('biblioteca-controles').classList.remove('hidden');
+      estado.textContent = 'Biblioteca privada disponible: ' +
+        bibliotecaDominios.length + ' dominio(s) y ' +
+        bibliotecaDocumentos.length + ' documento(s).';
+    } catch (error) {
+      estado.classList.add('error');
+      estado.textContent = 'No se pudo consultar la biblioteca: ' + String(error.message || 'Error');
+    }
+  }
+
+  $('dominio-form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const status = $('dominio-mensaje');
+    const button = $('dominio-guardar');
+    status.classList.remove('error');
+    button.disabled = true;
+    status.textContent = 'Registrando dominio...';
+    try {
+      const session = validarSesionBiblioteca();
+      const payload = {
+        tipo: $('dominio-tipo').value,
+        titulo: $('dominio-titulo').value.trim(),
+        codigo: $('dominio-codigo').value.trim() || null,
+        edicion: $('dominio-edicion').value.trim() || null,
+        referencia_oficial: $('dominio-referencia').value.trim() || null,
+        descripcion: $('dominio-descripcion').value.trim() || null,
+        empresa_id: $('dominio-empresa').value || null,
+        creado_por: session.user.id
+      };
+      const saved = await api('/rest/v1/dominios_conocimiento?select=id,titulo', {
+        method: 'POST', token:session.access_token,
+        prefer:'return=representation', body:payload
+      });
+      if (!Array.isArray(saved) || saved.length !== 1) {
+        throw new Error('No se registró el dominio.');
+      }
+      $('dominio-form').reset();
+      await cargarBiblioteca(session);
+      $('documento-dominio').value = saved[0].id;
+      status.textContent = 'Dominio registrado. Ya puedes adjuntar su documentación.';
+    } catch (error) {
+      status.classList.add('error');
+      status.textContent = 'Error al registrar: ' + String(error.message || 'Error');
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  function prepararArchivo(file) {
+    if (!file || file.size < 1 || file.size > 20971520) {
+      throw new Error('El documento debe tener entre 1 byte y 20 MB.');
+    }
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    const mimes = {
+      pdf:'application/pdf',
+      docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      txt:'text/plain'
+    };
+    if (!mimes[ext]) throw new Error('Tipo no admitido: utiliza PDF, DOCX o TXT.');
+    return {extension:ext,mime:mimes[ext]};
+  }
+
+  async function subirArchivoPrivado(file,path,mime,token) {
+    const response = await fetch(root + '/storage/v1/object/cimat-privado/' + path, {
+      method: 'POST',
+      headers: {
+        apikey:key, Authorization:'Bearer ' + token,
+        'Content-Type':mime, 'x-upsert':'false'
+      },
+      body:file,
+      cache:'no-store'
+    });
+    if (!response.ok) {
+      let message = '';
+      try {
+        const data = await response.json();
+        message = data.message || data.error || '';
+      } catch (_) {}
+      throw new Error('Storage HTTP ' + response.status +
+        (message ? ': ' + message : ''));
+    }
+  }
+
+  $('documento-form').addEventListener('submit',async function(event) {
+    event.preventDefault();
+    const status=$('documento-mensaje');
+    const button=$('documento-subir');
+    status.classList.remove('error');
+    button.disabled=true;
+    let subido=false;
+    try {
+      const session=validarSesionBiblioteca();
+      const dominioId=$('documento-dominio').value;
+      const dominio=bibliotecaDominios.find(d=>d.id===dominioId);
+      if(!dominio) throw new Error('Selecciona un dominio existente.');
+      if(!$('documento-derechos').checked) {
+        throw new Error('Debes declarar que dispones de derechos de uso.');
+      }
+      const file=$('documento-archivo').files[0];
+      const {extension,mime}=prepararArchivo(file);
+      const ruta='dominios/'+dominio.id+'/'+crypto.randomUUID()+'.'+extension;
+      status.textContent='Cargando archivo al almacenamiento privado...';
+      const bytes=await file.arrayBuffer();
+      const digest=await crypto.subtle.digest('SHA-256',bytes);
+      const sha256=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+      await subirArchivoPrivado(file,ruta,mime,session.access_token);
+      subido=true;
+      status.textContent='Registrando origen y versión documental...';
+      const docs=await api('/rest/v1/documentos_dominio?select=id', {
+        method:'POST',token:session.access_token,prefer:'return=representation',
+        body:{
+          dominio_id:dominio.id,
+          nombre_original:file.name.split(/[\\/]/).pop(),
+          ruta_storage:ruta,
+          tipo_mime:mime,
+          tamano_bytes:file.size,
+          sha256,
+          uso_autorizado_declarado:true,
+          cargado_por:session.user.id
+        }
+      });
+      if(!Array.isArray(docs)||docs.length!==1) throw new Error('Faltó registrar la ficha documental.');
+      $('documento-form').reset();
+      await cargarBiblioteca(session);
+      $('documento-dominio').value=dominioId;
+      status.textContent='Documento cargado y registrado correctamente. Aún no se ha analizado su contenido.';
+    } catch(error) {
+      status.classList.add('error');
+      status.textContent='Error: '+String(error.message||'Error desconocido')+
+        (subido?' El archivo se cargó, pero puede faltar su ficha; solicita revisión administrativa.':'');
+    } finally {
+      button.disabled=false;
+    }
+  });
+
+  $('documento-lista').addEventListener('click',async function(event) {
+    const target=event.target.closest('button.biblioteca-descarga');
+    if(!target) return;
+    const item=bibliotecaDocumentos.find(doc=>doc.id===target.dataset.doc);
+    if(!item) return;
+    target.disabled=true;
+    const status=$('documento-mensaje');
+    status.classList.remove('error');
+    status.textContent='Descargando documento privado...';
+    try {
+      const session=validarSesionBiblioteca();
+      const response=await fetch(
+        root+'/storage/v1/object/authenticated/cimat-privado/'+
+          item.ruta_storage.split('/').map(encodeURIComponent).join('/'),
+        {headers:{apikey:key,Authorization:'Bearer '+session.access_token},cache:'no-store'}
+      );
+      if(!response.ok) throw new Error('Storage HTTP '+response.status);
+      const objectURL=URL.createObjectURL(await response.blob());
+      const link=document.createElement('a');
+      link.href=objectURL;
+      link.download=item.nombre_original;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(()=>URL.revokeObjectURL(objectURL),15000);
+      status.textContent='Descarga preparada.';
+    } catch(error) {
+      status.classList.add('error');
+      status.textContent='No se pudo descargar: '+String(error.message||'Error');
+    } finally {target.disabled=false;}
   });
 
   const validConfig = /^https:\/\/[a-z0-9.-]+$/i.test(root) &&

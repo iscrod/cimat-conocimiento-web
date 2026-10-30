@@ -1,4 +1,33 @@
-# CIMAT — Plataforma web v0.5.0
+# CIMAT — Plataforma web v0.6.0
+
+## Biblioteca de conocimiento (nuevo)
+
+La plataforma ahora contiene una biblioteca documental general, separada de las tablas históricas de normas y entrevistas.
+
+- **Dominios**: normas, metodologías, manuales, procedimientos y otros documentos. Cada edición se registra de manera independiente, con título, código, referencia y ámbito general o empresarial.
+- **Documentos**: carga privada de PDF, DOCX y TXT de hasta 20 MB al bucket existente `cimat-privado` bajo `dominios/<id>/<archivo>`.
+- **Registro documental**: origen, nombre, tipo MIME, tamaño, hash SHA-256 y declaración de uso autorizado.
+- **Autorización**: solamente el administrador global puede registrar dominios, cargar archivos y descargarlos; las políticas RLS y Storage se aplican desde PostgreSQL. Los usuarios ordinarios y el rol Empresa no pueden consultar esta biblioteca.
+- **Sin IA por ahora**: almacenar el archivo no significa entrenar un modelo, procesar el documento ni validar procesos; esa será la siguiente fase después de definir el esquema de extracción.
+
+### Prueba inicial
+
+1. Inicia sesión como administrador global en https://iscrod.github.io/cimat-conocimiento-web/.
+2. Abre la pestaña **Biblioteca** y registra un dominio ficticio (tipo, título, versión y referencia).
+3. Adjunta un documento de prueba propio, no protegido por terceros, de menos de 20 MB.
+4. Verifica que aparezca en la lista y se pueda descargar.
+5. No utilices documentos internos reales o normas con derechos restringidos sin autorización.
+
+### Restricciones conocidas
+
+- Por ahora el acceso a la biblioteca es exclusivamente administrativo; falta la vista de experto con lectura autorizada por dominio.
+- No hay extracción de texto, indexación semántica, lectura de imágenes ni generación de cuestionarios.
+- Si el archivo se carga pero falla el registro de la ficha, puede quedar un archivo huérfano en Storage y requerir limpieza manual.
+- El catálogo de dominios admite los primeros 200 registros y 200 documentos; necesitará paginación antes de crecer.
+- Las versiones nuevas se agregan como registros separados. No sobrescribimos archivos anteriores.
+
+## Estado anterior
+
 
 Prototipo académico para extracción de conocimiento y mejora de procesos de software, con referencia a ISO/IEC 29110.
 

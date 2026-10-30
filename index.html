@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>CIMAT | Plataforma de extracción de conocimiento</title>
-  <link rel="stylesheet" href="styles.css?v=0.3.0">
+  <link rel="stylesheet" href="styles.css?v=0.4.0">
 </head>
 <body>
 <main class="shell">
   <header>
     <div>
-      <span class="tag">PROTOTIPO ACADÉMICO · V0.3.0</span>
+      <span class="tag">PROTOTIPO ACADÉMICO · V0.4.0</span>
       <h1>Plataforma de extracción de conocimiento</h1>
       <p>Gestión organizacional y mejora de procesos de software · ISO/IEC 29110</p>
     </div>
@@ -70,7 +70,7 @@
           <div><span class="done">✓</span><span>Base de datos PostgreSQL y autenticación</span></div>
           <div><span class="done">✓</span><span>Empresas autorizadas e informes con RLS</span></div>
           <div><span class="done">✓</span><span>Edición protegida del perfil personal</span></div>
-          <div><span class="pending">○</span><span>Gestión de organizaciones y roles administrativos</span></div>
+          <div><span class="done">✓</span><span>Organizaciones y roles por empresa (administración global)</span></div>
           <div><span class="pending">○</span><span>Entrevistas inteligentes, evaluación normativa y diagramas</span></div>
         </div>
       </article>
@@ -165,6 +165,44 @@
         </form>
         <p id="company-status" class="form-status" role="status"></p>
       </article>
+
+      <article id="admin-users-controls" class="card hidden">
+        <h2>Usuarios y roles por empresa</h2>
+        <p>Administra las asignaciones de usuarios ya registrados. Solo un administrador global puede ver este directorio y sus nombres.</p>
+        <p class="subtle">Para crear una cuenta nueva, utiliza <a href="https://supabase.com/dashboard/project/hqsmlvoftdlnvjzkzesp/auth/users" target="_blank" rel="noopener noreferrer">Supabase → Authentication → Users</a>. Después regresa aquí para asignar su función.</p>
+        <form id="role-form">
+          <label>Cuenta registrada
+            <select id="role-user" required>
+              <option value="">Selecciona un usuario</option>
+            </select>
+          </label>
+          <div class="grid compact-grid">
+            <label>Empresa
+              <select id="role-company" required>
+                <option value="">Selecciona la empresa</option>
+              </select>
+            </label>
+            <label>Rol por empresa
+              <select id="role-name" required>
+                <option value="entrevistado">Entrevistado</option>
+                <option value="experto">Moderador / experto</option>
+                <option value="empresa">Empresa (resultados consolidados)</option>
+                <option value="entrenador">Entrenador de IA</option>
+              </select>
+            </label>
+          </div>
+          <label class="checkline">
+            <input type="checkbox" id="role-active" checked> Asignación activa
+          </label>
+          <div class="form-actions">
+            <button type="submit" id="role-save">Guardar asignación</button>
+          </div>
+        </form>
+        <p id="role-status" class="form-status" role="status" aria-live="polite"></p>
+        <h3>Asignaciones existentes</h3>
+        <div id="role-directory" aria-live="polite">Cargando usuarios...</div>
+        <p class="subtle">El rol Administrador global se gestiona por separado. Los roles de Empresa no habilitan el directorio de personas, entrevistas ni respuestas individuales.</p>
+      </article>
       <article class="card muted">
         <h2>Control de acceso</h2>
         <p>Esta sección no permite asignar roles ni consultar respuestas individuales. La administración de empleados y expertos se implementará después de las pruebas de privacidad RF-SEG-01.</p>
@@ -175,6 +213,6 @@
   <footer>Investigación académica · Utilizar solo información ficticia hasta concluir las pruebas de privacidad y seguridad.</footer>
 </main>
 <script src="config.js"></script>
-<script src="app.js?v=0.3.0" defer></script>
+<script src="app.js?v=0.4.0" defer></script>
 </body>
 </html>

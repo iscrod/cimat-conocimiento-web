@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>CIMAT | Plataforma de extracción de conocimiento</title>
-  <link rel="stylesheet" href="styles.css?v=0.5.0">
+  <link rel="stylesheet" href="styles.css?v=0.6.0">
 </head>
 <body>
 <main class="shell">
   <header>
     <div>
-      <span class="tag">PROTOTIPO ACADÉMICO · V0.5.0</span>
+      <span class="tag">PROTOTIPO ACADÉMICO · V0.6.0</span>
       <h1>Plataforma de extracción de conocimiento</h1>
       <p>Gestión organizacional y mejora de procesos de software · ISO/IEC 29110</p>
     </div>
@@ -57,6 +57,7 @@
       <button type="button" class="tab" data-view="informes" role="tab" aria-selected="false">Informes</button>
       <button type="button" class="tab" data-view="perfil" role="tab" aria-selected="false">Mi perfil</button>
       <button type="button" class="tab" data-view="administracion" role="tab" aria-selected="false">Administración</button>
+      <button type="button" class="tab" data-view="biblioteca" role="tab" aria-selected="false">Biblioteca</button>
     </nav>
 
     <section data-panel="resumen" role="tabpanel">
@@ -240,11 +241,88 @@
         <p>Esta sección no permite asignar roles ni consultar respuestas individuales. La administración de empleados y expertos se implementará después de las pruebas de privacidad RF-SEG-01.</p>
       </article>
     </section>
+
+    <section data-panel="biblioteca" class="hidden" role="tabpanel">
+      <article class="card">
+        <h2>Biblioteca de conocimiento</h2>
+        <p>Registra normas, metodologías, manuales y procedimientos sin limitar el motor de extracción a ISO/IEC 29110. Cada versión se registra como un dominio independiente.</p>
+        <p id="biblioteca-estado" class="form-status" role="status">Comprobando autorización...</p>
+      </article>
+      <section id="biblioteca-controles" class="hidden">
+        <article class="card">
+          <h2>1. Registrar dominio</h2>
+          <form id="dominio-form">
+            <div class="grid compact-grid">
+              <label>Tipo
+                <select id="dominio-tipo" required>
+                  <option value="norma">Norma</option>
+                  <option value="metodologia">Metodología</option>
+                  <option value="manual">Manual</option>
+                  <option value="procedimiento">Procedimiento interno</option>
+                  <option value="otro">Otro documento de referencia</option>
+                </select>
+              </label>
+              <label>Organización
+                <select id="dominio-empresa"><option value="">General / compartido</option></select>
+              </label>
+            </div>
+            <label>Título del dominio
+              <input type="text" id="dominio-titulo" minlength="3" maxlength="250" required placeholder="Por ejemplo: ISO/IEC 29110 — Perfil Básico">
+            </label>
+            <div class="grid compact-grid">
+              <label>Código / identificador
+                <input type="text" id="dominio-codigo" maxlength="150" placeholder="Por ejemplo: ISO/IEC 29110-5-1-2">
+              </label>
+              <label>Edición / versión
+                <input type="text" id="dominio-edicion" maxlength="100" placeholder="Ejemplo: 2025">
+              </label>
+            </div>
+            <label>Referencia de origen
+              <input type="text" id="dominio-referencia" maxlength="1000" placeholder="Editorial, institución o URL oficial">
+            </label>
+            <label>Descripción y alcance
+              <textarea id="dominio-descripcion" rows="3" maxlength="4000" placeholder="¿Qué conocimiento y procesos cubre?"></textarea>
+            </label>
+            <button type="submit" id="dominio-guardar">Registrar dominio</button>
+          </form>
+          <p id="dominio-mensaje" class="form-status" role="status"></p>
+        </article>
+        <article class="card">
+          <h2>2. Adjuntar documentos privados</h2>
+          <p>Primero selecciona un dominio. Los archivos quedan en el almacenamiento privado de Supabase, no en GitHub.</p>
+          <form id="documento-form">
+            <label>Dominio seleccionado
+              <select id="documento-dominio" required><option value="">Selecciona un dominio</option></select>
+            </label>
+            <label>Documento (PDF, DOCX o TXT; máximo 20 MB)
+              <input type="file" id="documento-archivo" accept=".pdf,.docx,.txt" required>
+            </label>
+            <label class="checkline">
+              <input type="checkbox" id="documento-derechos" required>
+              Declaro que tengo autorización para almacenar y procesar este documento en CIMAT.
+            </label>
+            <button type="submit" id="documento-subir">Subir documento</button>
+          </form>
+          <p id="documento-mensaje" class="form-status" role="status"></p>
+        </article>
+        <article class="card">
+          <h2>Dominios y archivos registrados</h2>
+          <p>Los registros son independientes de las entrevistas. Aún no se extraen automáticamente tareas ni se generan preguntas.</p>
+          <div id="dominio-lista" aria-live="polite">Cargando...</div>
+          <h3>Documentos cargados</h3>
+          <div id="documento-lista" aria-live="polite">Cargando...</div>
+        </article>
+      </section>
+      <article class="card muted">
+        <h2>Siguiente etapa: análisis del dominio</h2>
+        <p>El sistema procesará los documentos, identificará procesos, actividades, tareas y relaciones, y solicitará validación a un experto antes de generar cuestionarios.</p>
+      </article>
+    </section>
   </section>
   <p id="notice" role="status" aria-live="polite"></p>
   <footer>Investigación académica · Utilizar solo información ficticia hasta concluir las pruebas de privacidad y seguridad.</footer>
 </main>
 <script src="config.js"></script>
-<script src="app.js?v=0.5.0" defer></script>
+<script src="app.js?v=0.6.0" defer></script>
 </body>
 </html>

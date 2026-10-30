@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>CIMAT | Plataforma de extracción de conocimiento</title>
-  <link rel="stylesheet" href="styles.css?v=0.7.0">
+  <link rel="stylesheet" href="styles.css?v=0.7.1">
 </head>
 <body>
 <main class="shell">
   <header>
     <div>
-      <span class="tag">PROTOTIPO ACADÉMICO · V0.7.0</span>
+      <span class="tag">PROTOTIPO ACADÉMICO · V0.7.1</span>
       <h1>Plataforma de extracción de conocimiento</h1>
       <p>Gestión organizacional y mejora de procesos de software · ISO/IEC 29110</p>
     </div>
@@ -58,6 +58,7 @@
       <button type="button" class="tab" data-view="perfil" role="tab" aria-selected="false">Mi perfil</button>
       <button type="button" class="tab" data-view="administracion" role="tab" aria-selected="false">Administración</button>
       <button type="button" class="tab" data-view="biblioteca" role="tab" aria-selected="false">Biblioteca</button>
+      <button type="button" class="tab" data-view="modelo" role="tab" aria-selected="false">Modelo y diagramas</button>
     </nav>
 
     <section data-panel="resumen" role="tabpanel">
@@ -338,16 +339,161 @@
         </article>
       </section>
       <article class="card muted">
-        <h2>Siguiente etapa: conocimiento estructurado</h2>
-        <p>Tras validar las secciones del documento, CIMAT identificará procesos, actividades, tareas, roles y sus relaciones. Solo entonces se prepararán los cuestionarios inteligentes.</p>
+        <h2>Modelo de conocimiento estructurado · v0.7.1</h2>
+        <p>Ya puedes clasificar elementos, relacionarlos y visualizarlos en <strong>Modelo y diagramas</strong>. Los registros de ejemplo permanecen en estado propuesto hasta revisión documental.</p>
       </article>
+    </section>
+
+    <section data-panel="modelo" class="hidden" role="tabpanel">
+      <article class="card">
+        <h2>Modelo de conocimiento estructurado · v0.7.1</h2>
+        <p>Representa procesos, actividades, tareas, roles, productos, componentes y sus relaciones. Los registros de esta pantalla son una <strong>estructura de referencia</strong>, no una evaluación de cumplimiento ni respuestas individuales.</p>
+        <p id="modelo-estado" class="form-status" role="status">Comprobando autorización...</p>
+      </article>
+      <section id="modelo-controles" class="hidden">
+        <article class="card">
+          <h2>1. Seleccionar dominio documental</h2>
+          <label>Dominio / edición
+            <select id="modelo-dominio"><option value="">Selecciona un dominio</option></select>
+          </label>
+          <p class="subtle">El ejemplo inicial de PM.1.1 está marcado como <strong>propuesto</strong>. Los códigos de referencia del PDF están en inglés (PM), aunque el diagrama previo utilizaba GP. Cada elemento conserva su página de origen para revisión.</p>
+          <button id="modelo-recargar" type="button" class="outline">Actualizar el modelo</button>
+        </article>
+        <article class="card">
+          <h2>2. Elementos del conocimiento</h2>
+          <p>Clasifica un elemento y registra su fuente. Para aprobarlo debes asociarlo a una página real del PDF y verificarlo.</p>
+          <form id="modelo-elemento-form">
+            <label>Elemento existente
+              <select id="modelo-elemento-id"><option value="">+ Nuevo elemento</option></select>
+            </label>
+            <div class="grid compact-grid">
+              <label>Categoría
+                <select id="modelo-elemento-tipo" required>
+                  <option value="proceso">Proceso</option>
+                  <option value="actividad">Actividad</option>
+                  <option value="tarea">Tarea</option>
+                  <option value="rol">Rol</option>
+                  <option value="producto">Producto de trabajo</option>
+                  <option value="componente">Componente de producto</option>
+                  <option value="concepto">Otro concepto</option>
+                </select>
+              </label>
+              <label>Código, cuando exista
+                <input id="modelo-elemento-codigo" maxlength="100" placeholder="PM.1.1">
+              </label>
+            </div>
+            <label>Denominación del elemento
+              <input id="modelo-elemento-titulo" required maxlength="300" minlength="3" placeholder="Revisar el Enunciado de Trabajo">
+            </label>
+            <label>Descripción opcional
+              <textarea id="modelo-elemento-descripcion" rows="2" maxlength="4000"></textarea>
+            </label>
+            <div class="grid compact-grid">
+              <label>Archivo de referencia
+                <select id="modelo-elemento-documento"><option value="">Sin archivo (solo propuesta)</option></select>
+              </label>
+              <label>Página física del PDF
+                <input id="modelo-elemento-pagina" type="number" min="1" max="200" step="1" placeholder="18">
+              </label>
+            </div>
+            <div class="grid compact-grid">
+              <label>Orden de presentación
+                <input id="modelo-elemento-orden" type="number" value="0" min="0" max="1000000" step="1">
+              </label>
+              <label>Estado de revisión
+                <select id="modelo-elemento-estado">
+                  <option value="propuesto">Propuesto</option>
+                  <option value="aprobado">Aprobado por revisión</option>
+                  <option value="descartado">Descartado</option>
+                </select>
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="submit" id="modelo-elemento-guardar">Guardar elemento</button>
+              <button type="button" id="modelo-elemento-limpiar" class="outline">Nuevo / limpiar</button>
+            </div>
+          </form>
+          <p class="form-status" id="modelo-elemento-estado-mensaje" role="status"></p>
+          <h3>Elementos registrados</h3>
+          <div id="modelo-elementos-lista" class="modelo-directorio" aria-live="polite"></div>
+        </article>
+
+        <article class="card">
+          <h2>3. Relaciones entre elementos</h2>
+          <p>Las conexiones explican el proceso: <strong>proceso contiene actividad; actividad contiene tarea; rol participa en tarea; tarea utiliza o genera producto; producto contiene componentes.</strong></p>
+          <form id="modelo-relacion-form">
+            <label>Relación existente
+              <select id="modelo-relacion-id"><option value="">+ Nueva relación</option></select>
+            </label>
+            <div class="grid compact-grid">
+              <label>Elemento de origen
+                <select id="modelo-relacion-origen" required><option value="">Selecciona</option></select>
+              </label>
+              <label>Tipo de relación
+                <select id="modelo-relacion-tipo" required>
+                  <option value="contiene">Contiene</option>
+                  <option value="participa">Participa en</option>
+                  <option value="ejecuta">Ejecuta</option>
+                  <option value="utiliza">Utiliza (entrada)</option>
+                  <option value="genera">Genera (salida)</option>
+                  <option value="actualiza">Actualiza</option>
+                  <option value="verifica">Verifica</option>
+                  <option value="precede">Precede a</option>
+                  <option value="referencia">Referencia</option>
+                </select>
+              </label>
+            </div>
+            <label>Elemento de destino
+              <select id="modelo-relacion-destino" required><option value="">Selecciona</option></select>
+            </label>
+            <label>Explicación adicional (opcional)
+              <input id="modelo-relacion-detalle" maxlength="1000" placeholder="La tarea produce una versión revisada del documento">
+            </label>
+            <div class="grid compact-grid">
+              <label>Archivo de referencia
+                <select id="modelo-relacion-documento"><option value="">Sin archivo (solo propuesta)</option></select>
+              </label>
+              <label>Página física del PDF
+                <input id="modelo-relacion-pagina" type="number" min="1" max="200" step="1" placeholder="18">
+              </label>
+              <label>Estado de revisión
+                <select id="modelo-relacion-estado">
+                  <option value="propuesto">Propuesto</option>
+                  <option value="aprobado">Aprobado por revisión</option>
+                  <option value="descartado">Descartado</option>
+                </select>
+              </label>
+            </div>
+            <div class="form-actions">
+              <button id="modelo-relacion-guardar" type="submit">Guardar relación</button>
+              <button id="modelo-relacion-limpiar" type="button" class="outline">Nueva / limpiar</button>
+            </div>
+          </form>
+          <p class="form-status" id="modelo-relacion-estado-mensaje" role="status"></p>
+          <h3>Relaciones registradas</h3>
+          <div id="modelo-relaciones-lista" class="modelo-directorio" aria-live="polite"></div>
+        </article>
+
+        <article class="card">
+          <h2>4. Diagrama generado desde el modelo</h2>
+          <p>Los roles aparecen a la izquierda, las tareas y su secuencia al centro, y los productos de entrada y salida a la derecha. No es una imagen fija: se construye a partir de los elementos y relaciones guardados.</p>
+          <label>Proceso o actividad que deseas representar
+            <select id="modelo-diagrama-raiz"><option value="">Selecciona un proceso o actividad</option></select>
+          </label>
+          <div class="modelo-diagrama-scroll" role="region" tabindex="0" aria-label="Diagrama de conocimiento desplazable">
+            <div id="modelo-diagrama" aria-live="polite"></div>
+          </div>
+          <p class="subtle">Los conectores representan relaciones declaradas; el orden visible de las tareas es provisional. La correspondencia exacta con la fuente y el cumplimiento requieren revisión experta.</p>
+        </article>
+      </section>
     </section>
   </section>
   <p id="notice" role="status" aria-live="polite"></p>
   <footer>Investigación académica · Utilizar solo información ficticia hasta concluir las pruebas de privacidad y seguridad.</footer>
 </main>
 <script src="config.js"></script>
-<script src="app.js?v=0.7.0" defer></script>
-<script src="analisis.js?v=0.7.0" defer></script>
+<script src="app.js?v=0.7.1" defer></script>
+<script src="analisis.js?v=0.7.1" defer></script>
+<script src="modelo.js?v=0.7.1" defer></script>
 </body>
 </html>

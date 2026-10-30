@@ -1,4 +1,4 @@
-/* CIMAT Web v0.3.0 - prototipo sin dependencias externas de JavaScript.
+/* CIMAT Web v0.4.0 - prototipo sin dependencias externas de JavaScript.
  * API de autenticacion Supabase Auth y consultas PostgREST.
  * Solo utiliza clave PUBLICA y JWT del usuario; RLS protege los datos.
  * La sesion se conserva temporalmente en sessionStorage, no en GitHub.
@@ -13,6 +13,7 @@
   const storageKey = 'cimat_v012_sesion';
   let currentSession = null;
   let adminCompanies = [];
+  let adminUsers = [];
 
   function visible(id, yes) {
     const element = $(id);
@@ -176,6 +177,7 @@
     const status = $('admin-status');
     const controls = $('admin-controls');
     controls.classList.add('hidden');
+    $('admin-users-controls').classList.add('hidden');
     status.textContent = 'Comprobando autorización...';
     adminCompanies = [];
     try {
@@ -194,11 +196,162 @@
       updateCompanySelect();
       controls.classList.remove('hidden');
       status.textContent = 'Acceso administrativo autorizado. Organizaciones registradas: ' + companies.length + '.';
+      await loadAdminUsers(session);
     } catch (error) {
       status.textContent = 'No fue posible comprobar el permiso administrativo: ' +
         String(error.message || 'Error desconocido');
     }
   }
+
+
+  function fillRoleCompanySelect() {
+    const target = $('role-company');
+    const selected = target.value;
+    target.replaceChildren();
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = 'Selecciona una empresa';
+    target.append(empty);
+    adminCompanies.forEach(function (company) {
+      const opt = document.createElement('option');
+      opt.value = company.id;
+      opt.textContent = company.nombre + (company.activa ? '' : ' [inactiva]');
+      target.append(opt);
+    });
+    if (adminCompanies.some((company) => company.id === selected)) target.value = selected;
+  }
+
+  function fillRoleUserSelect() {
+    const target = $('role-user');
+    const selected = target.value;
+    target.replaceChildren();
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = 'Selecciona un usuario';
+    target.append(empty);
+    adminUsers.forEach(function (user) {
+      const opt = document.createElement('option');
+      opt.value = user.id;
+      const label = [user.nombre, user.apellidos].filter(Boolean).join(' ');
+      opt.textContent = (label || user.email) + ' · ' + user.email + (user.confirmado ? '' : ' [sin confirmar]');
+      opt.disabled = !user.confirmado;
+      target.append(opt);
+    });
+    if (adminUsers.some((u) => u.id === selected && u.confirmado)) target.value = selected;
+  }
+
+  function renderRoleDirectory() {
+    const target = $('role-directory');
+    const selected = $('role-user').value;
+    const chosen = selected ? adminUsers.filter((u) => u.id === selected) : adminUsers;
+    if (!chosen.length) {
+      target.textContent = 'No hay cuentas disponibles para mostrar.';
+      return;
+    }
+    target.innerHTML = chosen.map(function (user) {
+      const label = [user.nombre, user.apellidos].filter(Boolean).join(' ');
+      const assignments = Array.isArray(user.asignaciones) ? user.asignaciones : [];
+      const rows = assignments.map(function (a) {
+        return '<div class="role-entry">' +
+          '<span>' + escapeHTML(a.empresa) + ' · ' + escapeHTML(a.rol) +
+          ' <small>(' + (a.activo ? 'Activo' : 'Inactivo') + ')</small></span>' +
+          '<button type="button" class="outline role-edit" data-user="' + escapeHTML(user.id) +
+          '" data-company="' + escapeHTML(a.empresa_id) +
+          '" data-rol="' + escapeHTML(a.rol) +
+          '" data-activo="' + (a.activo ? 'true' : 'false') +
+          '">Editar</button></div>';
+      }).join('');
+      return '<div class="directory-user"><strong>' + escapeHTML(label || user.email) +
+        '</strong><div class="subtle">' + escapeHTML(user.email) + '</div>' +
+        (rows || '<div class="subtle">Sin asignaciones</div>') + '</div>';
+    }).join('');
+  }
+
+  async function loadAdminUsers(session) {
+    const controls = $('admin-users-controls');
+    const status = $('role-status');
+    controls.classList.add('hidden');
+    try {
+      const users = await api('/rest/v1/rpc/admin_listar_usuarios', {
+        method: 'POST', token: session.access_token, body: {}
+      });
+      if (!Array.isArray(users)) throw new Error('Formato de directorio inesperado.');
+      if (!currentSession || currentSession.user.id !== session.user.id) return;
+      adminUsers = users;
+      fillRoleCompanySelect();
+      fillRoleUserSelect();
+      renderRoleDirectory();
+      controls.classList.remove('hidden');
+      status.classList.remove('error');
+      status.textContent = 'Directorio administrativo disponible: ' + users.length +
+        ' cuenta(s). Solo puedes asignar cuentas confirmadas.';
+    } catch (error) {
+      controls.classList.add('hidden');
+      $('admin-status').textContent += ' Directorio de usuarios no disponible: ' +
+        String(error.message || 'Error de permisos.');
+    }
+  }
+
+  $('role-user').addEventListener('change', renderRoleDirectory);
+  $('role-directory').addEventListener('click', function (event) {
+    const button = event.target.closest('button.role-edit');
+    if (!button) return;
+    const user = adminUsers.find((u) => u.id === button.dataset.user);
+    const company = adminCompanies.find((c) => c.id === button.dataset.company);
+    if (!user || !company) return;
+    $('role-user').value = user.id;
+    $('role-company').value = company.id;
+    $('role-name').value = button.dataset.rol;
+    $('role-active').checked = button.dataset.activo === 'true';
+    renderRoleDirectory();
+    $('role-status').textContent = 'Asignación seleccionada. Cambia el estado o el rol y guarda.';
+    $('role-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  $('role-form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const status = $('role-status');
+    const button = $('role-save');
+    status.classList.remove('error');
+    const session = currentSession;
+    if (!session || Date.now() >= session.expires_at) {
+      status.classList.add('error');
+      status.textContent = 'Sesión caducada. Inicia sesión nuevamente.';
+      return;
+    }
+    const userId = $('role-user').value;
+    const companyId = $('role-company').value;
+    const role = $('role-name').value;
+    const active = $('role-active').checked;
+    if (!userId || !companyId || !['entrevistado','experto','empresa','entrenador'].includes(role)) {
+      status.classList.add('error');
+      status.textContent = 'Selecciona una cuenta confirmada, una empresa y un rol válido.';
+      return;
+    }
+    button.disabled = true;
+    status.textContent = 'Guardando asignación...';
+    try {
+      await api('/rest/v1/rpc/admin_guardar_rol', {
+        method: 'POST', token: session.access_token,
+        body: {
+          p_usuario_id: userId, p_empresa_id: companyId,
+          p_rol: role, p_activo: active
+        }
+      });
+      await loadAdminUsers(session);
+      $('role-user').value = userId;
+      renderRoleDirectory();
+      status.classList.remove('error');
+      status.textContent = 'Asignación ' + (active ? 'activada' : 'desactivada') +
+        ' correctamente. Los permisos de las sesiones se verifican en el servidor.';
+    } catch (error) {
+      status.classList.add('error');
+      status.textContent = 'No fue posible guardar la asignación: ' +
+        String(error.message || 'Error desconocido.');
+    } finally {
+      button.disabled = false;
+    }
+  });
 
   function updateCompanySelect() {
     const select = $('company-id');

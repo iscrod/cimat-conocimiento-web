@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>CIMAT | Plataforma de extracción de conocimiento</title>
-  <link rel="stylesheet" href="styles.css?v=0.7.1">
+  <link rel="stylesheet" href="styles.css?v=0.8.0">
 </head>
 <body>
 <main class="shell">
   <header>
     <div>
-      <span class="tag">PROTOTIPO ACADÉMICO · V0.7.1</span>
+      <span class="tag">PROTOTIPO ACADÉMICO · V0.8.0</span>
       <h1>Plataforma de extracción de conocimiento</h1>
       <p>Gestión organizacional y mejora de procesos de software · ISO/IEC 29110</p>
     </div>
@@ -339,14 +339,14 @@
         </article>
       </section>
       <article class="card muted">
-        <h2>Modelo de conocimiento estructurado · v0.7.1</h2>
+        <h2>Modelo de conocimiento estructurado · v0.8.0</h2>
         <p>Ya puedes clasificar elementos, relacionarlos y visualizarlos en <strong>Modelo y diagramas</strong>. Los registros de ejemplo permanecen en estado propuesto hasta revisión documental.</p>
       </article>
     </section>
 
     <section data-panel="modelo" class="hidden" role="tabpanel">
       <article class="card">
-        <h2>Modelo de conocimiento estructurado · v0.7.1</h2>
+        <h2>Modelo de conocimiento estructurado · v0.8.0</h2>
         <p>Representa procesos, actividades, tareas, roles, productos, componentes y sus relaciones. Los registros de esta pantalla son una <strong>estructura de referencia</strong>, no una evaluación de cumplimiento ni respuestas individuales.</p>
         <p id="modelo-estado" class="form-status" role="status">Comprobando autorización...</p>
       </article>
@@ -359,8 +359,41 @@
           <p class="subtle">El ejemplo inicial de PM.1.1 está marcado como <strong>propuesto</strong>. Los códigos de referencia del PDF están en inglés (PM), aunque el diagrama previo utilizaba GP. Cada elemento conserva su página de origen para revisión.</p>
           <button id="modelo-recargar" type="button" class="outline">Actualizar el modelo</button>
         </article>
+
         <article class="card">
-          <h2>2. Elementos del conocimiento</h2>
+          <h2>2. Propuestas mediante IA · v0.8</h2>
+          <p>El analizador puede examinar hasta <strong>dos páginas por solicitud</strong> del documento ya procesado e identificar procesos, tareas, roles, productos, componentes y relaciones. Todas las propuestas deben verificarse y aprobarse por un experto.</p>
+          <p id="ia-configuracion" class="form-status" role="status">Comprobando disponibilidad del proveedor de IA...</p>
+          <form id="ia-form">
+            <label>Documento del dominio
+              <select id="ia-documento" required><option value="">Selecciona un PDF procesado</option></select>
+            </label>
+            <div class="grid compact-grid">
+              <label>Página inicial (PDF)
+                <input id="ia-pagina-inicio" type="number" required min="1" max="200" step="1" value="1">
+              </label>
+              <label>Página final (máximo dos)
+                <input id="ia-pagina-fin" type="number" required min="1" max="200" step="1" value="1">
+              </label>
+            </div>
+            <label class="checkline">
+              <input id="ia-consentimiento" type="checkbox" required>
+              Confirmo que tengo autorización para enviar el texto seleccionado a un proveedor externo de IA para su análisis.
+            </label>
+            <p class="subtle">Los documentos completos permanecen privados en Supabase. Solo se transmiten las páginas elegidas. El nivel gratuito del proveedor puede utilizar los datos para mejorar sus servicios; no utilices documentos confidenciales sin autorización específica.</p>
+            <div class="form-actions">
+              <button id="ia-enviar" type="submit">Analizar con IA</button>
+              <button id="ia-estado-boton" type="button" class="outline">Comprobar configuración</button>
+              <button id="ia-actualizar" type="button" class="outline">Consultar ejecuciones</button>
+            </div>
+          </form>
+          <p id="ia-resultado" class="form-status" role="status" aria-live="polite"></p>
+          <h3>Historial de propuestas</h3>
+          <div id="ia-historial" aria-live="polite">Sin consultas todavía.</div>
+          <p class="subtle">Para activar IA: configura la clave secreta <code>CIMAT_GEMINI_API_KEY</code> en Supabase → Edge Functions → Secrets; nunca la escribas en esta página ni en GitHub. Después revisa las propuestas en el catálogo y el diagrama.</p>
+        </article>
+        <article class="card">
+          <h2>3. Elementos del conocimiento</h2>
           <p>Clasifica un elemento y registra su fuente. Para aprobarlo debes asociarlo a una página real del PDF y verificarlo.</p>
           <form id="modelo-elemento-form">
             <label>Elemento existente
@@ -419,7 +452,7 @@
         </article>
 
         <article class="card">
-          <h2>3. Relaciones entre elementos</h2>
+          <h2>4. Relaciones entre elementos</h2>
           <p>Las conexiones explican el proceso: <strong>proceso contiene actividad; actividad contiene tarea; rol participa en tarea; tarea utiliza o genera producto; producto contiene componentes.</strong></p>
           <form id="modelo-relacion-form">
             <label>Relación existente
@@ -475,7 +508,7 @@
         </article>
 
         <article class="card">
-          <h2>4. Diagrama generado desde el modelo</h2>
+          <h2>5. Diagrama generado desde el modelo</h2>
           <p>Los roles aparecen a la izquierda, las tareas y su secuencia al centro, y los productos de entrada y salida a la derecha. No es una imagen fija: se construye a partir de los elementos y relaciones guardados.</p>
           <label>Proceso o actividad que deseas representar
             <select id="modelo-diagrama-raiz"><option value="">Selecciona un proceso o actividad</option></select>
@@ -492,8 +525,9 @@
   <footer>Investigación académica · Utilizar solo información ficticia hasta concluir las pruebas de privacidad y seguridad.</footer>
 </main>
 <script src="config.js"></script>
-<script src="app.js?v=0.7.1" defer></script>
-<script src="analisis.js?v=0.7.1" defer></script>
-<script src="modelo.js?v=0.7.1" defer></script>
+<script src="app.js?v=0.8.0" defer></script>
+<script src="analisis.js?v=0.8.0" defer></script>
+<script src="modelo.js?v=0.8.0" defer></script>
+<script src="ia.js?v=0.8.0" defer></script>
 </body>
 </html>

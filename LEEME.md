@@ -1,45 +1,47 @@
-# CIMAT — Plataforma web v0.3.0
+# CIMAT — Plataforma web v0.4.0
 
-Prototipo académico para la extracción de conocimiento y mejora de procesos de software, con referencia a ISO/IEC 29110.
+Prototipo académico para extracción de conocimiento y mejora de procesos de software, con referencia a ISO/IEC 29110.
 
-## Estado funcional
+## Funcionalidad implementada
 
-- Inicio de sesión con correo y contraseña usando Supabase Auth.
-- Consulta de organizaciones asignadas mediante PostgreSQL y Row Level Security (RLS).
-- Consulta únicamente de informes consolidados que estén autorizados por la base de datos.
-- Panel web con Resumen, Mis empresas, Informes, Mi perfil y Administración (según permisos).
-- Edición del nombre y los apellidos propios mediante UPDATE a la tabla `perfiles`, sujeta a permisos por columna y política RLS.
-- Se conserva el almacenamiento temporal de la sesión en `sessionStorage`; en esta versión no se renuevan automáticamente los tokens.
+- Inicio de sesión mediante Supabase Auth y consultas protegidas por PostgreSQL RLS.
+- Perfil personal: consultar y modificar exclusivamente nombre y apellidos propios.
+- Empresas: consultar las autorizadas; el administrador global puede registrar y editar organizaciones.
+- Informes: consultar únicamente los consolidados aprobados y autorizados.
+- Gestión de usuarios y roles por empresa: el administrador global puede consultar un directorio limitado a 200 cuentas existentes, revisar sus asignaciones, activar o desactivar los roles `entrevistado`, `experto`, `empresa` y `entrenador`.
+- Las altas de cuentas nuevas siguen realizándose en **Supabase → Authentication → Users**; no hay un botón web que cree cuentas directamente.
+- Los cambios de asignación producen un evento en la tabla `auditoria`.
+- El privilegio de administrador global se gestiona aparte; no se concede a través del formulario de roles por empresa.
 
-## Pendiente de desarrollo
+## Arquitectura de permisos
 
-- Alta y edición de empresas implementada y protegida mediante una autorización administrativa global. **No hay administradores habilitados todavía.**\n- Administración de usuarios y roles (pendiente; no habilitada).
-- Entrevistas, cuestionarios, integración de IA, extracción de conocimiento, trazabilidad y diagramas.
-- Revisión de seguridad integral con varias cuentas y pruebas de confidencialidad de entrevistados.
-- Procesos de recuperación de contraseña, administración de sesiones y registro de auditoría de la interfaz.
+- El frontend público utiliza exclusivamente la URL y la clave **publishable**.
+- `public.usuario_empresa_rol` no dispone de lectura directa desde `authenticated`, y `auth.users` tampoco se expone a la API.
+- El administrador utiliza dos RPC expuestas con `SECURITY INVOKER`: `admin_listar_usuarios()` y `admin_guardar_rol()`.
+- Cada RPC delega en una función `SECURITY DEFINER` situada en el esquema no expuesto `private`; antes de acceder o modificar datos, comprueba `auth.uid()` y `private.es_administrador_plataforma()`. El esquema `private` no está en la lista de esquemas publicados por Data API.
+- Las funciones RPC no están autorizadas para el rol `anon`.
+- El rol `empresa` **no** adquiere acceso a este directorio: se le asignará exclusivamente consulta de resultados consolidados aptos para su publicación.
+- Es indispensable probar el control con otras cuentas no administrativas antes de utilizar datos reales.
 
-## Seguridad y privacidad
+## Restricciones / pendientes
 
-- El sitio público contiene solamente una clave **publishable** y la URL de Supabase.
-- Nunca publicar contraseñas de PostgreSQL, claves `sb_secret_...`, `service_role`, tokens de usuario ni archivos privados.
-- Las consultas y cambios están controlados por grants y políticas RLS en Supabase: ocultar un elemento visual no otorga ni quita permisos reales.\n- La tabla `private.administradores_plataforma` está aislada del cliente; el acceso se comprueba con una función auxiliar y políticas RLS. La activación de la primera cuenta administrativa exige aprobación explícita del responsable del sistema.
-- RF-SEG-01: el rol Empresa no podrá ver nombres ni respuestas individuales de los entrevistados. Antes de habilitar datos reales hay que evaluar también la reidentificación indirecta en informes.
-- Nunca usar información confidencial ni personal real para pruebas del prototipo sin evaluación y autorización previas.
-- Si la sesión caduca, cerrar sesión e iniciar nuevamente. No se ha implementado renovación automática.
+- Todavía no se han implementado invitaciones automáticas, recuperación de contraseñas, registro de participantes desde la aplicación, ni renovación automática de sesiones.
+- Los roles `experto` y `entrenador` existen y pueden asignarse, pero sus pantallas y permisos operativos se construirán posteriormente.
+- Entrevistas, cuestionarios, extracción mediante IA, evidencia, diagramas y evaluación normativa continúan pendientes.
+- RF-SEG-01: las respuestas individuales y nombres de entrevistados deben permanecer protegidos ante el rol Empresa; los informes consolidados deben pasar revisión humana y protección contra reidentificación indirecta.
+- No utilizar información confidencial real antes de completar las pruebas de privacidad, autorización y gestión de sesiones.
+- La protección contra contraseñas filtradas todavía requiere atención según el analizador de Supabase (puede depender del plan).
+- Para el MVP, el directorio administrativo está limitado a 200 cuentas; antes de crecer debe agregarse paginación.
 
-## Implementación
+## Publicación
 
-- `index.html`: estructura de pantallas.
-- `styles.css`: presentación adaptable.
-- `app.js`: autenticación y consultas REST a Supabase.
-- `config.js`: URL y clave pública del proyecto.
-- Sin servidor Node.js propio ni bibliotecas JavaScript de terceros para el frontend inicial.
-- Publicación: GitHub Pages, rama `main`, carpeta `/(root)`.
+GitHub Pages en la rama `main`, carpeta `/(root)`:
+https://iscrod.github.io/cimat-conocimiento-web/
 
-## Fuentes oficiales
+## Documentación oficial
 
 - [Supabase Auth](https://supabase.com/docs/guides/auth)
 - [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security)
-- [Permisos por columna](https://supabase.com/docs/guides/database/postgres/column-level-security)
-- [Seguridad de Data API](https://supabase.com/docs/guides/api/securing-your-api)
+- [Supabase Data API](https://supabase.com/docs/guides/api/securing-your-api)
+- [Supabase funciones y seguridad](https://supabase.com/docs/guides/database/functions)
 - [GitHub Pages](https://docs.github.com/en/pages)

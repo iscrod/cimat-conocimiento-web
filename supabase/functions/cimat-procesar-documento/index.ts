@@ -75,8 +75,12 @@ Deno.serve(async (req:Request):Promise<Response> => {
 
     const {data:doc,error:docErr}=await service.from("documentos_dominio")
       .select("id,nombre_original,ruta_storage,tipo_mime,tamano_bytes,sha256,uso_autorizado_declarado")
-      .eq("id",documentoId).single();
-    if(docErr || !doc) return reply(404,"Documento inexistente.");
+      .eq("id",documentoId).maybeSingle();
+    if(docErr) {
+      console.error("Error al consultar metadatos del documento",docErr.code);
+      return reply(500,"El procesador no pudo consultar el registro del documento. Revisa los permisos del servicio.");
+    }
+    if(!doc) return reply(404,"El documento solicitado no está registrado.");
     if(doc.uso_autorizado_declarado!==true) return reply(403,"Documento sin autorización de uso.");
     if(doc.tipo_mime!=="application/pdf") return reply(415,"En esta versión solo se procesan archivos PDF.");
     if(doc.tamano_bytes > 4*1024*1024) return reply(413,"El procesador inicial admite PDF de hasta 4 MB.");

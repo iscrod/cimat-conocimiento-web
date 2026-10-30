@@ -86,6 +86,9 @@ Deno.serve(async (request: Request) => {
       if (message.includes("already") || message.includes("registered") || message.includes("exists")) {
         return respuesta(409, "Esa cuenta ya existe. Selecciónala en el directorio y asígnale un rol.");
       }
+      if (message.includes("email address not authorized") || message.includes("not authorized to send")) {
+        return respuesta(403, "Supabase solo puede escribir a correos del equipo del proyecto. Para invitar a participantes externos configura un proveedor SMTP en Authentication.");
+      }
       if (inviteError.status === 429) {
         return respuesta(429, "Supabase alcanzó el límite temporal de envío de correos.");
       }

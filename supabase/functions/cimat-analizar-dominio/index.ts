@@ -111,7 +111,7 @@ Deno.serve(async(req:Request)=>{
       const match=known.find(x=>x.tipo===type&&(code?x.codigo===code:!x.codigo&&norm(x.titulo)===norm(title)));
       if(match){refs.set(ref,match.id);continue;}
       const description=txt(e.descripcion,500);
-      const {data:created,error:insertErr}=await service.from("conocimiento_elementos").insert({
+      const {data:created,error:insertErr}=await caller.from("conocimiento_elementos").insert({
         dominio_id:doc.dominio_id,documento_id:docId,pagina:page,tipo:type,
         codigo:code||null,titulo:title,descripcion:(description?description+" | ":"")+"Cita literal: "+quote,
         estado:"propuesto",origen:"ia",orden:0,creado_por:verified.user.id
@@ -126,7 +126,7 @@ Deno.serve(async(req:Request)=>{
         type=txt(e.tipo,20),quote=txt(e.cita,180),page=num(e.pagina);
       if(!from||!to||from===to||!links.has(type)||quote.length<15||!source.get(page)?.includes(norm(quote))){rejected++;continue;}
       const detail=txt(e.detalle,350);
-      const {error:insertErr}=await service.from("conocimiento_relaciones").insert({
+      const {error:insertErr}=await caller.from("conocimiento_relaciones").insert({
         dominio_id:doc.dominio_id,origen_id:from,destino_id:to,tipo:type,
         detalle:(detail?detail+" | ":"")+"Cita literal: "+quote,
         documento_id:docId,pagina:page,estado:"propuesto",creado_por:verified.user.id

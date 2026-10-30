@@ -351,7 +351,7 @@
       diagram.append(group);
     }
     if(!activities.length)diagram.append(el("p","Este proceso todavía no tiene actividades vinculadas."));
-    const review=el("p","Vista de trabajo: "+totalTasks+" tarea(s), "+links.length+" relación(es) vigentes. Fuente del ejemplo: ISO/IEC TR 29110-5-1-2:2011; comprobar las referencias antes de aprobar.","modelo-diagrama-pie");
+    const review=el("p","Vista de trabajo: "+totalTasks+" tarea(s), "+links.length+" relación(es) vigentes. Edición y fuentes: consultar el dominio elegido y las páginas de cada elemento antes de aprobar.","modelo-diagrama-pie");
     diagram.append(review);
     target.append(diagram);
   }

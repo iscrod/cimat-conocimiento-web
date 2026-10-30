@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>CIMAT | Plataforma de extracción de conocimiento</title>
-  <link rel="stylesheet" href="styles.css?v=0.6.0">
+  <link rel="stylesheet" href="styles.css?v=0.7.0">
 </head>
 <body>
 <main class="shell">
   <header>
     <div>
-      <span class="tag">PROTOTIPO ACADÉMICO · V0.6.0</span>
+      <span class="tag">PROTOTIPO ACADÉMICO · V0.7.0</span>
       <h1>Plataforma de extracción de conocimiento</h1>
       <p>Gestión organizacional y mejora de procesos de software · ISO/IEC 29110</p>
     </div>
@@ -312,10 +312,34 @@
           <h3>Documentos cargados</h3>
           <div id="documento-lista" aria-live="polite">Cargando...</div>
         </article>
+        <article class="card">
+          <h2>3. Procesar y revisar documentos · v0.7</h2>
+          <p>Extrae el texto por página y detecta encabezados candidatos. El documento original permanece privado; las sugerencias <strong>no representan conocimiento normativo aprobado</strong>.</p>
+          <label>Documento registrado
+            <select id="analisis-documento"><option value="">Selecciona un archivo</option></select>
+          </label>
+          <div class="form-actions">
+            <button type="button" id="analisis-procesar">Procesar PDF</button>
+            <button type="button" id="analisis-recargar" class="outline">Consultar análisis</button>
+          </div>
+          <p id="analisis-estado" class="form-status" role="status" aria-live="polite"></p>
+          <div id="analisis-resumen" class="hidden"></div>
+          <section id="analisis-inspeccion" class="hidden">
+            <h3>Verificar texto por página</h3>
+            <p class="subtle">Referencia a la página física del PDF; la numeración impresa puede ser diferente. Si una página no tiene texto, el documento podría requerir OCR.</p>
+            <label>Página del documento
+              <select id="analisis-pagina"></select>
+            </label>
+            <pre id="analisis-texto" class="analisis-texto" aria-label="Texto extraído de la página seleccionada"></pre>
+            <h3>Encabezados candidatos: revisión humana</h3>
+            <p class="subtle">Las coincidencias son detectadas por reglas de numeración; pueden existir falsas identificaciones o encabezados omitidos. Revisa la página antes de aprobar.</p>
+            <div id="analisis-secciones"></div>
+          </section>
+        </article>
       </section>
       <article class="card muted">
-        <h2>Siguiente etapa: análisis del dominio</h2>
-        <p>El sistema procesará los documentos, identificará procesos, actividades, tareas y relaciones, y solicitará validación a un experto antes de generar cuestionarios.</p>
+        <h2>Siguiente etapa: conocimiento estructurado</h2>
+        <p>Tras validar las secciones del documento, CIMAT identificará procesos, actividades, tareas, roles y sus relaciones. Solo entonces se prepararán los cuestionarios inteligentes.</p>
       </article>
     </section>
   </section>
@@ -323,6 +347,6 @@
   <footer>Investigación académica · Utilizar solo información ficticia hasta concluir las pruebas de privacidad y seguridad.</footer>
 </main>
 <script src="config.js"></script>
-<script src="app.js?v=0.6.0" defer></script>
+<script src="app.js?v=0.7.0" defer></script>
 </body>
 </html>

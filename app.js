@@ -1,4 +1,4 @@
-/* CIMAT Web v0.4.0 - prototipo sin dependencias externas de JavaScript.
+/* CIMAT Web v0.5.0 - prototipo sin dependencias externas de JavaScript.
  * API de autenticacion Supabase Auth y consultas PostgREST.
  * Solo utiliza clave PUBLICA y JWT del usuario; RLS protege los datos.
  * La sesion se conserva temporalmente en sessionStorage, no en GitHub.
@@ -14,6 +14,9 @@
   let currentSession = null;
   let adminCompanies = [];
   let adminUsers = [];
+  const inviteParams = new URLSearchParams(window.location.hash.slice(1));
+  let pendingInviteToken = inviteParams.get('type') === 'invite' ? inviteParams.get('access_token') : null;
+  if (pendingInviteToken) window.history.replaceState(null, '', window.location.pathname + window.location.search);
 
   function visible(id, yes) {
     const element = $(id);
@@ -50,7 +53,7 @@
       try { data = JSON.parse(raw); } catch (_) { data = {}; }
     }
     if (!response.ok) {
-      const detail = data.error_description || data.msg || data.message || '';
+      const detail = data.error_description || data.msg || data.message || data.mensaje || '';
       throw new Error('HTTP ' + response.status + (detail ? ': ' + detail : ''));
     }
     return data;
@@ -80,6 +83,7 @@
   function showLogin() {
     visible('login', true);
     visible('workspace', false);
+    visible('invite-accept', false);
     $('password').value = '';
   }
 
@@ -177,6 +181,7 @@
     const status = $('admin-status');
     const controls = $('admin-controls');
     controls.classList.add('hidden');
+    $('admin-invite-controls').classList.add('hidden');
     $('admin-users-controls').classList.add('hidden');
     status.textContent = 'Comprobando autorización...';
     adminCompanies = [];
@@ -195,6 +200,7 @@
       adminCompanies = companies;
       updateCompanySelect();
       controls.classList.remove('hidden');
+      $('admin-invite-controls').classList.remove('hidden');
       status.textContent = 'Acceso administrativo autorizado. Organizaciones registradas: ' + companies.length + '.';
       await loadAdminUsers(session);
     } catch (error) {
@@ -348,6 +354,85 @@
       status.classList.add('error');
       status.textContent = 'No fue posible guardar la asignación: ' +
         String(error.message || 'Error desconocido.');
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+
+  $('invite-form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const session = currentSession;
+    const button = $('invite-send');
+    const status = $('invite-status');
+    status.classList.remove('error');
+    if (!session || Date.now() >= session.expires_at) {
+      status.classList.add('error');
+      status.textContent = 'La sesión caducó. Inicia sesión nuevamente.';
+      return;
+    }
+    button.disabled = true;
+    status.textContent = 'Enviando invitación...';
+    try {
+      const response = await api('/functions/v1/cimat-invitar-usuario', {
+        method: 'POST',
+        token: session.access_token,
+        body: {
+          email: $('invite-email').value.trim(),
+          nombre: $('invite-name').value.trim(),
+          apellidos: $('invite-surname').value.trim()
+        }
+      });
+      $('invite-form').reset();
+      status.textContent = response.mensaje ||
+        'Invitación enviada. Asigna empresa y rol después de que se confirme la cuenta.';
+      // La lista se consulta de nuevo para mostrar a los usuarios invitados pendientes.
+      await loadAdminUsers(session);
+    } catch (error) {
+      status.classList.add('error');
+      status.textContent = 'No fue posible enviar la invitación: ' +
+        String(error.message || 'Error desconocido');
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $('invite-password-form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const status = $('invite-accept-status');
+    const button = $('invite-password-save');
+    status.classList.remove('error');
+    const password = $('invite-password').value;
+    const confirm = $('invite-password-confirm').value;
+    if (!pendingInviteToken) {
+      status.classList.add('error');
+      status.textContent = 'El enlace ya no es válido. Solicita una invitación nueva.';
+      return;
+    }
+    if (password.length < 12 || password !== confirm) {
+      status.classList.add('error');
+      status.textContent = 'Utiliza al menos 12 caracteres y escribe la misma contraseña dos veces.';
+      return;
+    }
+    button.disabled = true;
+    status.textContent = 'Guardando contraseña...';
+    try {
+      await api('/auth/v1/user', {
+        method: 'PUT', token: pendingInviteToken,
+        body: { password }
+      });
+      // No persistimos el token del enlace. La persona inicia sesión normalmente.
+      pendingInviteToken = null;
+      $('invite-password').value = '';
+      $('invite-password-confirm').value = '';
+      visible('invite-accept', false);
+      showLogin();
+      notice('Contraseña establecida. Ingresa con el correo al que llegó la invitación.');
+    } catch (error) {
+      status.classList.add('error');
+      status.textContent = 'No pudo establecerse la contraseña (' +
+        String(error.message || 'Enlace inválido') +
+        '). Si venció, solicita otra invitación.';
     } finally {
       button.disabled = false;
     }
@@ -564,16 +649,37 @@
     }
   });
 
-  const existingSession = readSession();
-  if (existingSession) {
-    currentSession = existingSession;
-    renderWorkspace(existingSession).catch(function (error) {
-      clearSession();
-      showLogin();
-      notice('La sesion anterior no pudo recuperarse: ' + error.message);
+  if (pendingInviteToken) {
+    clearSession();
+    visible('login', false);
+    visible('workspace', false);
+    visible('invite-accept', true);
+    const tokenInMemory = pendingInviteToken;
+    api('/auth/v1/user', { token: tokenInMemory }).then(function (user) {
+      if (!user || !user.id || pendingInviteToken !== tokenInMemory) {
+        throw new Error('Token no válido');
+      }
+      $('invite-accept-status').textContent =
+        'Invitación verificada. Establece tu contraseña para activar el acceso.';
+    }).catch(function () {
+      pendingInviteToken = null;
+      $('invite-password-save').disabled = true;
+      $('invite-accept-status').classList.add('error');
+      $('invite-accept-status').textContent =
+        'Este enlace no es válido o ya venció. Solicita una nueva invitación.';
     });
   } else {
-    clearSession();
-    showLogin();
+    const existingSession = readSession();
+    if (existingSession) {
+      currentSession = existingSession;
+      renderWorkspace(existingSession).catch(function (error) {
+        clearSession();
+        showLogin();
+        notice('La sesión anterior no pudo recuperarse: ' + error.message);
+      });
+    } else {
+      clearSession();
+      showLogin();
+    }
   }
 })();

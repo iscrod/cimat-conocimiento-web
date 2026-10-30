@@ -26,7 +26,7 @@ Deno.serve(async(req:Request)=>{
   let b:Record<string,unknown>;
   try{b=await req.json();}catch{return reply(400,"Solicitud JSON inválida");}
   const key=Deno.env.get("CIMAT_GEMINI_API_KEY")||"";
-  const model=Deno.env.get("CIMAT_GEMINI_MODEL")||"gemini-3.7-flash";
+  const model=Deno.env.get("CIMAT_GEMINI_MODEL")||"gemini-3.8-flash";
   if(b.accion==="estado")return reply(200,key?"Proveedor configurado":"Falta configurar una clave Gemini",{configurado:!!key,modelo:model});
   if(b.accion!=="analizar")return reply(400,"Acción desconocida");
   if(!key)return reply(503,"Configura CIMAT_GEMINI_API_KEY en Supabase Edge Functions > Secrets");

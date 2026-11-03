@@ -90,7 +90,8 @@
     const item=ent==="elemento"?state.elements.find(x=>x.id===id):state.relations.find(x=>x.id===id);
     const merged=state.merges.find(f=>f.fuente_id===id);
     $("revision-reclasificar").disabled=ent!=="elemento"||!item||!!merged||item.estado==="aprobado";
-    $("revision-fusionar").disabled=ent!=="elemento"||!item||!!merged||item.estado!=="propuesto";
+    const isCanonical=state.merges.some(f=>f.canonico_id===id);
+    $("revision-fusionar").disabled=ent!=="elemento"||!item||!!merged||isCanonical||item.estado!=="propuesto";
     $("revision-deshacer").disabled=ent!=="elemento"||!merged;
     $("revision-aprobar").disabled=!item||!!merged||item.estado==="aprobado";
     $("revision-descartar").disabled=!item||!!merged||item.estado==="descartado";
@@ -132,7 +133,7 @@
       const item=state.elements.find(x=>x.id===r.elemento_id)||
         state.relations.find(x=>x.id===r.relacion_id);
       card.append(e("strong",new Date(r.creado_en).toLocaleString("es-MX")+
-        " · "+r.accion+" · "+(item?(item.codigo||item.titulo||r.relacion_id):"Ficha histórica")));
+        " · "+r.accion+" · "+(item?(item.codigo||item.titulo||(r.relacion_id?linksName(item):"Ficha")):"Ficha histórica")));
       card.append(e("p",r.motivo||"Sin motivo."));
       if(r.accion==="reclasificar"){
         card.append(e("small","Tipo anterior: "+(r.anterior?.tipo||"—")+

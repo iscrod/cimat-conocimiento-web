@@ -155,3 +155,28 @@ h3{font-size:17px;line-height:1.3;margin:17px 0 7px}
 select[multiple]{min-height:130px;padding:6px;border:1px solid #b9c7d7;border-radius:8px;background:white}
 select[multiple] option{padding:7px 5px}
 @media(max-width:700px){.v85-diagram-row{grid-template-columns:1fr}.v85-diagram-row>div{padding:10px}}
+
+/* CIMAT v0.8.5 — mejora de captura: apartados plegables y selección por casillas */
+.v85-accordion{margin:16px 0;padding-top:0}
+.v85-accordion > summary{display:flex;justify-content:space-between;align-items:center;gap:14px;cursor:pointer;list-style:none;min-height:61px;padding:15px 3px}
+.v85-accordion > summary::-webkit-details-marker{display:none}
+.v85-accordion > summary h2{margin:0;font-size:1.1rem;line-height:1.35}
+.v85-accordion > summary::after{content:"＋";font-weight:700;font-size:22px;line-height:1;color:#375d75;flex-shrink:0}
+.v85-accordion[open] > summary::after{content:"−"}
+.v85-accordion[open] > summary{border-bottom:1px solid #dce5f0;margin-bottom:14px}
+.v85-accordion > summary:focus-visible{outline:3px solid #648bab;outline-offset:4px;border-radius:8px}
+.v85-code-config{border:1px solid #d7e4ef;padding:13px 15px;border-radius:10px;background:#f7fafc;margin:14px 0}
+.v85-code-config button{margin:9px 0 4px}
+.v85-check-field{min-width:0;max-width:100%;border:1px solid #d4e2ef;border-radius:10px;padding:9px 10px 12px;background:#fafcff}
+.v85-check-field legend{font-weight:650;font-size:13px;padding:0 6px;color:#244661}
+.v85-checklist{min-height:78px;max-height:220px;overflow-y:auto;display:grid;align-content:start;gap:3px}
+.v85-checklist small{color:#607389;padding:9px}
+.v85-check-option{display:flex;align-items:flex-start;gap:8px;padding:8px 9px;border-radius:6px;font-size:13px;line-height:1.35;cursor:pointer;margin:0}
+.v85-check-option:hover{background:#eaf3fc}
+.v85-check-option:has(input:checked){background:#e8f4ed;border:1px solid #abcbb9;padding:7px 8px}
+.v85-check-option input[type="checkbox"]{width:16px;height:16px;min-width:16px;margin:1px 2px 0 0;accent-color:#1a6b54}
+.v85-inline-feedback{margin:12px 0 0;min-height:24px;padding:8px 11px;border-radius:7px}
+.v85-inline-feedback:empty{padding:0;min-height:0}
+.v85-inline-feedback.v85-success{color:#15593e;background:#e7f5ec;border:1px solid #b5dbc4;font-weight:600}
+.v85-inline-feedback.error{color:#912b2b;background:#fff1f1;border:1px solid #e2b6b6}
+@media(max-width:640px){.v85-accordion > summary h2{font-size:1rem}.v85-check-field{padding:9px}}

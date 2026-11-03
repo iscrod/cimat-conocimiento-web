@@ -6,7 +6,7 @@
   const root = String(cfg.SUPABASE_URL || "").replace(/\/+$/, "");
   const key = String(cfg.SUPABASE_PUBLISHABLE_KEY || "");
   const sessionKey = "cimat_v012_sesion";
-  const model = { domains: [], documents: [], elements: [], relations: [], evidence: [], ready: false };
+  const model = { domains: [], documents: [], elements: [], relations: [], evidence: [], fusiones: [], ready: false };
   const kinds = { proceso: "Proceso", actividad: "Actividad", tarea: "Tarea", rol: "Rol", producto: "Producto de trabajo", componente: "Componente", concepto: "Concepto" };
   const relations = { contiene: "contiene", participa: "participa en", ejecuta: "ejecuta", utiliza: "utiliza (entrada)", genera: "genera (salida)", actualiza: "actualiza", verifica: "verifica", precede: "precede a", referencia: "referencia" };
 
@@ -59,7 +59,8 @@
   }
   function sourceLabel(item) {
     const doc = model.documents.find(d => d.id === item.documento_id);
-    const more = model.evidence.filter(e => e.elemento_id === item.id);
+    const ids = new Set([item.id, ...model.fusiones.filter(f => f.canonico_id === item.id).map(f => f.fuente_id)]);
+    const more = model.evidence.filter(e => ids.has(e.elemento_id));
     const pages = [...new Set([item.pagina,...more.map(e => e.pagina)].filter(Boolean))].sort((a,b)=>a-b);
     return pages.length ? "PDF pág. " + pages.join(", ") +
       (doc?" · "+doc.nombre_original:"") : "Sin referencia de página";
@@ -101,17 +102,19 @@
     const domain = selectedDomain();
     if (!domain) return;
     msg("modelo-estado", "Cargando conocimiento...");
-    const [documents, elements, edges, evidence] = await Promise.all([
+    const [documents, elements, edges, evidence, fusiones] = await Promise.all([
       api("/rest/v1/documentos_dominio?select=id,dominio_id,nombre_original&dominio_id=eq." + encodeURIComponent(domain) + "&order=cargado_en.desc&limit=100"),
       api("/rest/v1/conocimiento_elementos?select=id,dominio_id,documento_id,pagina,tipo,codigo,titulo,descripcion,estado,origen,orden,revisado_en&dominio_id=eq." + encodeURIComponent(domain) + "&order=orden.asc&limit=500"),
       api("/rest/v1/conocimiento_relaciones?select=id,dominio_id,origen_id,destino_id,tipo,detalle,documento_id,pagina,estado&dominio_id=eq." + encodeURIComponent(domain) + "&limit=1000"),
-      api("/rest/v1/conocimiento_evidencias?select=elemento_id,documento_id,pagina,cita&dominio_id=eq." + encodeURIComponent(domain) + "&limit=2000")
+      api("/rest/v1/conocimiento_evidencias?select=elemento_id,documento_id,pagina,cita&dominio_id=eq." + encodeURIComponent(domain) + "&limit=2000"),
+      api("/rest/v1/conocimiento_fusiones?select=fuente_id,canonico_id&dominio_id=eq." + encodeURIComponent(domain) + "&limit=500")
     ]);
     if (domain !== selectedDomain()) return;
     model.documents = documents;
     model.elements = elements;
     model.relations = edges;
     model.evidence = evidence;
+    model.fusiones = fusiones;
     const docDisplay = d => d.nombre_original;
     options("modelo-elemento-documento", documents, "Sin PDF asociado (solo propuesta)", docDisplay);
     options("modelo-relacion-documento", documents, "Sin PDF asociado (solo propuesta)", docDisplay);
@@ -124,7 +127,8 @@
       const last = elements.find(n => n.id === edge.destino_id);
       return (first?.codigo || first?.titulo || "?") + " → " + edge.tipo + " → " + (last?.codigo || last?.titulo || "?");
     });
-    const parentNodes = elements.filter(n => ["proceso", "actividad"].includes(n.tipo) && n.estado !== "descartado");
+    const fusedIds = new Set(fusiones.map(f => f.fuente_id));
+    const parentNodes = elements.filter(n => ["proceso", "actividad"].includes(n.tipo) && n.estado !== "descartado" && !fusedIds.has(n.id));
     options("modelo-diagrama-raiz", parentNodes, "Selecciona un proceso o actividad", nodeDisplay);
     const rootSelect = $("modelo-diagrama-raiz");
     if (!rootSelect.value && parentNodes.length) rootSelect.value = parentNodes.find(n => n.tipo === "proceso")?.id || parentNodes[0].id;
@@ -186,7 +190,8 @@
     if(duplicateTarget){
       duplicateTarget.replaceChildren();
       const byName=new Map();
-      model.elements.filter(e=>e.tipo==="producto"&&e.estado!=="descartado").forEach(e=>{
+      const fusedIds=new Set(model.fusiones.map(f=>f.fuente_id));
+      model.elements.filter(e=>e.tipo==="producto"&&e.estado!=="descartado"&&!fusedIds.has(e.id)).forEach(e=>{
         const key=e.titulo.normalize("NFKC").trim().toLocaleLowerCase("es");
         if(!byName.has(key))byName.set(key,[]);
         byName.get(key).push(e);
@@ -203,7 +208,8 @@
     model.elements.slice().sort((a,b)=>a.tipo.localeCompare(b.tipo)||sortNodes(a,b)).forEach(n => {
       const row = el("div", null, "modelo-directorio-fila");
       const desc = el("div", null, "modelo-directorio-descripcion");
-      desc.append(el("strong", displayNode(n)), el("small", n.estado + " · " + sourceLabel(n)));
+      const fusion=model.fusiones.find(f=>f.fuente_id===n.id);
+      desc.append(el("strong", displayNode(n)), el("small", n.estado + (fusion?" · consolidada en otra ficha":"") + " · " + sourceLabel(n)));
       const references=model.evidence.filter(e=>e.elemento_id===n.id);
       if(references.length){
         const details=el("details");
@@ -321,9 +327,19 @@
     const target=$("modelo-diagrama"),rootId=$("modelo-diagrama-raiz").value;
     target.replaceChildren();
     if(!rootId) {target.append(el("p","Selecciona un proceso o actividad."));return;}
-    const included=model.elements.filter(n=>n.estado!=="descartado");
+    // Consolidación visual reversible: registros, citas y relaciones originales no se borran.
+    const alias=new Map(model.fusiones.map(f=>[f.fuente_id,f.canonico_id]));
+    const included=model.elements.filter(n=>n.estado!=="descartado"&&!alias.has(n.id));
     const valid=new Set(included.map(n=>n.id));
-    const links=model.relations.filter(r=>r.estado!=="descartado"&&valid.has(r.origen_id)&&valid.has(r.destino_id));
+    const seen=new Set();
+    const links=model.relations.filter(r=>r.estado!=="descartado").map(r=>({
+      ...r,origen_id:alias.get(r.origen_id)||r.origen_id,destino_id:alias.get(r.destino_id)||r.destino_id
+    })).filter(r=>{
+      if(!valid.has(r.origen_id)||!valid.has(r.destino_id)||r.origen_id===r.destino_id)return false;
+      const key=r.origen_id+"|"+r.tipo+"|"+r.destino_id;
+      if(seen.has(key))return false;
+      seen.add(key);return true;
+    });
     const byId=new Map(included.map(n=>[n.id,n]));
     const children=(id,tipo)=>links.filter(r=>r.origen_id===id&&r.tipo==="contiene")
       .map(r=>byId.get(r.destino_id)).filter(x=>x&&(!tipo||x.tipo===tipo)).sort(sortNodes);

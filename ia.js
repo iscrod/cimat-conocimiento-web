@@ -7,7 +7,7 @@
   const root=String(cfg.SUPABASE_URL||"").replace(/\/+$/,"");
   const key=String(cfg.SUPABASE_PUBLISHABLE_KEY||"");
   const sessionKey="cimat_v012_sesion";
-  let documents=[],busy=false;
+  let documents=[],busy=false,fullRunning=false,stopRequested=false;
   function session(){
     let s;
     try{s=JSON.parse(sessionStorage.getItem(sessionKey)||"null");}catch{}
@@ -45,10 +45,12 @@
       status("ia-configuracion",a.configurado
         ?"Proveedor de IA configurado · "+a.modelo+". Analiza solo fragmentos autorizados."
         :"IA aún no habilitada: configura CIMAT_GEMINI_API_KEY como secreto del proyecto Supabase.");
-      $("ia-enviar").disabled=!a.configurado;
+      $("ia-enviar").disabled=!a.configurado || fullRunning;
+      $("ia-total-iniciar").disabled=!a.configurado || fullRunning;
     }catch(err){
       status("ia-configuracion","No fue posible comprobar la IA: "+err.message,true);
       $("ia-enviar").disabled=true;
+      $("ia-total-iniciar").disabled=true;
     }
   }
   async function loadDocuments(){
@@ -138,6 +140,108 @@
         : "No se completó el análisis: "+err.message,true);
       await history();
     }finally{button.disabled=false;}
+  });
+
+  // Operación integral: una sola decisión explícita del administrador, múltiples
+  // solicitudes pequeñas. El progreso persistente se consulta desde ia_extracciones.
+  function pendingPairs(pages){
+    const pending=[...new Set(pages)].filter(Number.isInteger).sort((a,b)=>a-b);
+    const pairs=[];
+    for(let i=0;i<pending.length;i++){
+      const start=pending[i];
+      if(pending[i+1]===start+1){pairs.push([start,start+1]);i++;}
+      else pairs.push([start,start]);
+    }
+    return pairs;
+  }
+  $("ia-total-detener").addEventListener("click",()=>{
+    stopRequested=true;
+    status("ia-total-estado","Se detendrá al concluir la solicitud actual. Las páginas ya analizadas quedarán guardadas.");
+  });
+  $("ia-total-iniciar").addEventListener("click",async()=>{
+    if(fullRunning)return;
+    const id=$("ia-documento").value;
+    if(!id){status("ia-total-estado","Selecciona primero el documento.",true);return;}
+    if(!$("ia-total-consentimiento").checked){
+      status("ia-total-estado","Debes autorizar de forma específica el envío de todas las páginas con texto a Gemini.",true);return;
+    }
+    fullRunning=true;
+    stopRequested=false;
+    const startButton=$("ia-total-iniciar"),stopButton=$("ia-total-detener");
+    startButton.disabled=true;
+    $("ia-enviar").disabled=true;
+    $("ia-documento").disabled=true;
+    stopButton.classList.remove("hidden");
+    stopButton.disabled=false;
+    let completed=0,created=0,edges=0,discarded=0,total=0,wasStopped=false,failed=false;
+    try{
+      status("ia-total-estado","Preparando el análisis integral y consultando páginas que ya se procesaron...");
+      const plan=await api("/functions/v1/cimat-analizar-dominio",{
+        method:"POST",body:{accion:"plan",documento_id:id}
+      });
+      const pairs=pendingPairs(plan.paginas_pendientes||[]);
+      total=pairs.length;
+      if(total===0){
+        status("ia-total-estado","No quedan páginas pendientes con texto para el modelo "+plan.modelo+
+          ". Revisa y consolida los elementos propuestos.");
+        return;
+      }
+      const eligible=plan.paginas_con_texto||0;
+      const done=(plan.paginas_analizadas||[]).length;
+      const proceed=window.confirm(
+        "CIMAT analizará "+(eligible-done)+" páginas pendientes de "+eligible+
+        " mediante aproximadamente "+total+" solicitudes a Gemini. "+
+        "Ya se han analizado "+done+" páginas. "+
+        "La operación puede consumir cuota o generar cargos según tu cuenta. "+
+        "Se enviará texto del documento a Google. ¿Confirmas continuar?"
+      );
+      if(!proceed){status("ia-total-estado","Análisis cancelado. No se enviaron nuevas páginas.");return;}
+      for(let i=0;i<pairs.length;i++){
+        if(stopRequested){wasStopped=true;break;}
+        const [from,to]=pairs[i];
+        status("ia-total-estado","Analizando tramo "+(i+1)+" de "+total+
+          " · páginas "+from+(to===from?"":"–"+to)+". "+
+          "Completados: "+completed+"; nuevos elementos: "+created+
+          "; relaciones: "+edges+". Mantén abierta esta pestaña.");
+        let result;
+        try{
+          result=await api("/functions/v1/cimat-analizar-dominio",{
+            method:"POST",
+            body:{accion:"analizar",documento_id:id,pagina_inicio:from,pagina_fin:to,
+              consentimiento_externo:true}
+          });
+        }catch(err){
+          failed=true;
+          status("ia-total-estado","Interrupción en las páginas "+from+"–"+to+": "+err.message+
+            ". Consulta el historial antes de reanudar; CIMAT omitirá los tramos ya completados.",true);
+          break;
+        }
+        completed++;
+        created+=Number(result.elementos_nuevos||0);
+        edges+=Number(result.relaciones_nuevas||0);
+        discarded+=Number(result.descartes_sin_evidencia||0);
+        // Pausa moderada para no concentrar todas las peticiones en pocos segundos.
+        if(i<pairs.length-1&&!stopRequested)await new Promise(r=>setTimeout(r,8000));
+      }
+      if(!failed){
+        status("ia-total-estado",(wasStopped||stopRequested?"Análisis detenido de forma segura. ":"Análisis integral finalizado. ")+
+          "Tramos completados ahora: "+completed+"/"+total+
+          ". Elementos nuevos: "+created+"; relaciones nuevas: "+edges+
+          "; propuestas descartadas: "+discarded+
+          ". Revisa la estructura y sus evidencias antes de aprobar.");
+      }
+      await history();
+      $("modelo-recargar")?.click();
+    }catch(err){
+      status("ia-total-estado","No se pudo completar la planificación: "+err.message+
+        ". No reinicies a ciegas; consulta las ejecuciones registradas.",true);
+    }finally{
+      fullRunning=false;
+      $("ia-documento").disabled=false;
+      stopButton.classList.add("hidden");
+      $("ia-total-consentimiento").checked=false;
+      await config();
+    }
   });
   document.querySelector('[data-view="modelo"]')?.addEventListener("click",init);
 })();

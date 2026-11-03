@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>CIMAT | Plataforma de extracción de conocimiento</title>
-  <link rel="stylesheet" href="styles.css?v=0.8.5-1">
+  <link rel="stylesheet" href="styles.css?v=0.8.5-2">
 </head>
 <body>
 <main class="shell">
@@ -325,11 +325,22 @@
         <p id="v85-status" class="form-status" role="status" aria-live="polite">Abre este apartado como administrador para comenzar.</p>
       </article>
       <section id="v85-controls" class="hidden">
-        <article class="card" id="v85-s1">
-          <h2>1. Selección del dominio y fuente de referencia</h2>
+        <details class="card v85-accordion" id="v85-s1" open>
+          <summary><h2>1. Selección del dominio y fuente de referencia</h2></summary>
           <label>Dominio o edición
             <select id="v85-domain"><option value="">Selecciona el dominio</option></select>
           </label>
+          <div class="v85-code-config">
+            <label>¿Las actividades de esta norma o metodología tienen código oficial?
+              <select id="v85-activities-have-code">
+                <option value="">Selecciona una opción</option>
+                <option value="si">Sí, sus actividades tienen código</option>
+                <option value="no">No, CIMAT propondrá un código interno</option>
+              </select>
+            </label>
+            <button type="button" id="v85-code-save" class="outline">Guardar configuración de códigos</button>
+            <p id="v85-code-status" class="form-status" role="status" aria-live="polite"></p>
+          </div>
           <div class="grid compact-grid">
             <label>Documento de la Biblioteca (referencia opcional en la captura)
               <select id="v85-doc"><option value="">Sin documento asignado</option></select>
@@ -340,10 +351,10 @@
           </div>
           <div class="form-actions"><button type="button" id="v85-refresh" class="outline">Actualizar datos del dominio</button></div>
           <p class="subtle">La referencia seleccionada se guarda con cada nuevo registro; puedes cambiarla antes de capturar otro. Los registros sin fuente permanecen como información de trabajo, no como conformidad normativa verificada.</p>
-        </article>
+        </details>
 
-        <article class="card" id="v85-s2">
-          <h2>2. Catálogo de roles</h2>
+        <details class="card v85-accordion" id="v85-s2">
+          <summary><h2>2. Catálogo de roles</h2></summary>
           <p>Un rol puede ser compartido por varias metodologías. Al reutilizarlo se crea una asociación con el dominio, no una copia del rol; la función particular puede especificarse sin alterar otras ediciones.</p>
           <form id="v85-role-new">
             <h3>Registrar un rol nuevo</h3>
@@ -372,10 +383,10 @@
             <button type="submit" class="outline">Vincular o actualizar función del rol</button>
           </form>
           <div id="v85-role-list" class="v85-records" aria-live="polite"></div>
-        </article>
+        </details>
 
-        <article class="card" id="v85-s3">
-          <h2>3. Procesos y actividades</h2>
+        <details class="card v85-accordion" id="v85-s3">
+          <summary><h2>3. Procesos y actividades</h2></summary>
           <form id="v85-process-form">
             <h3>Proceso</h3>
             <label>Seleccionar para editar o crear uno nuevo
@@ -392,9 +403,6 @@
             <label>Descripción (opcional)
               <textarea id="v85-process-desc" maxlength="4000" rows="2"></textarea>
             </label>
-            <label>Orden visual
-              <input id="v85-process-order" type="number" min="0" max="100000" value="0">
-            </label>
             <div class="form-actions"><button type="submit">Guardar proceso</button><button type="button" id="v85-process-clear" class="outline">Nuevo</button></div>
           </form>
           <form id="v85-activity-form">
@@ -406,26 +414,24 @@
               <select id="v85-activity-parent" required><option value="">Selecciona un proceso</option></select>
             </label>
             <div class="grid compact-grid">
-              <label>Código (opcional)
+              <label id="v85-activity-code-wrap" hidden>Código oficial de la actividad (opcional)
                 <input id="v85-activity-code" maxlength="90" placeholder="GP.1">
               </label>
               <label>Nombre de la actividad
                 <input id="v85-activity-name" minlength="3" maxlength="250" required placeholder="Planificación del Proyecto">
               </label>
             </div>
+            <p id="v85-activity-code-hint" class="subtle">Configura primero si las actividades tienen código oficial en el apartado 1.</p>
             <label>Descripción (opcional)
               <textarea id="v85-activity-desc" maxlength="4000" rows="2"></textarea>
-            </label>
-            <label>Orden visual
-              <input id="v85-activity-order" type="number" min="0" max="100000" value="0">
             </label>
             <div class="form-actions"><button type="submit">Guardar actividad</button><button type="button" id="v85-activity-clear" class="outline">Nueva</button></div>
           </form>
           <div id="v85-process-list" class="v85-records" aria-live="polite"></div>
-        </article>
+        </details>
 
-        <article class="card" id="v85-s4">
-          <h2>4. Tabla relacional: tareas, roles y productos</h2>
+        <details class="card v85-accordion" id="v85-s4">
+          <summary><h2>4. Tabla relacional: tareas, roles y productos</h2></summary>
           <p>Primero registra los productos con un nombre único por dominio; después selecciónalos como entrada, salida o producto actualizado en tantas tareas como corresponda. Una coincidencia de productos no crea por sí sola una relación de precedencia.</p>
           <form id="v85-product-form">
             <h3>Catálogo de productos</h3>
@@ -439,6 +445,7 @@
               <textarea id="v85-product-desc" maxlength="4000" rows="2"></textarea>
             </label>
             <div class="form-actions"><button type="submit">Guardar producto</button><button type="button" id="v85-product-clear" class="outline">Nuevo</button></div>
+            <p id="v85-product-feedback" class="form-status v85-inline-feedback" role="status" aria-live="polite"></p>
           </form>
           <form id="v85-task-form">
             <h3>Captura de tarea</h3>
@@ -457,9 +464,6 @@
               <label>Código de tarea (opcional)
                 <input id="v85-task-code" maxlength="90" placeholder="GP.1.1">
               </label>
-              <label>Orden visual (no implica dependencia)
-                <input id="v85-task-order" type="number" min="0" max="100000" value="0">
-              </label>
             </div>
             <label>Descripción o nombre de la tarea
               <input id="v85-task-name" minlength="3" maxlength="500" required placeholder="Revisar el Enunciado de Trabajo">
@@ -468,24 +472,25 @@
               <textarea id="v85-task-desc" maxlength="4000" rows="2"></textarea>
             </label>
             <div class="grid compact-grid">
-              <label>Roles participantes
-                <select id="v85-task-roles" multiple size="5"></select>
-              </label>
-              <label>Productos de entrada
-                <select id="v85-task-inputs" multiple size="5"></select>
-              </label>
-              <label>Productos de salida
-                <select id="v85-task-outputs" multiple size="5"></select>
-              </label>
-              <label>Productos que se actualizan
-                <select id="v85-task-updates" multiple size="5"></select>
-              </label>
+              <fieldset class="v85-check-field"><legend>Roles participantes</legend>
+                <div id="v85-task-roles" class="v85-checklist" role="group" aria-label="Roles participantes"></div>
+              </fieldset>
+              <fieldset class="v85-check-field"><legend>Productos de entrada</legend>
+                <div id="v85-task-inputs" class="v85-checklist" role="group" aria-label="Productos de entrada"></div>
+              </fieldset>
+              <fieldset class="v85-check-field"><legend>Productos de salida</legend>
+                <div id="v85-task-outputs" class="v85-checklist" role="group" aria-label="Productos de salida"></div>
+              </fieldset>
+              <fieldset class="v85-check-field"><legend>Productos que se actualizan</legend>
+                <div id="v85-task-updates" class="v85-checklist" role="group" aria-label="Productos que se actualizan"></div>
+              </fieldset>
             </div>
-            <p class="subtle">Para seleccionar varios elementos utiliza Ctrl o Shift al hacer clic; en dispositivos táctiles, selecciona cada opción. Las cuatro listas pueden quedar vacías cuando la fuente no define información.</p>
+            <p class="subtle">Marca las casillas de los roles y productos que correspondan. Puedes seleccionar varios elementos en cada grupo; déjalos sin marcar si la fuente no los especifica.</p>
             <div class="form-actions"><button type="submit">Guardar tarea y sus relaciones</button><button type="button" id="v85-task-clear" class="outline">Nueva tarea</button></div>
+            <p id="v85-task-feedback" class="form-status v85-inline-feedback" role="status" aria-live="polite"></p>
           </form>
           <h3>Secuencia explícita</h3>
-          <p>La precedencia es independiente del orden visual. Puedes enlazar tareas o actividades y representar actividades paralelas sin imponer un orden inexistente.</p>
+          <p>Las tareas se muestran por orden de registro. La precedencia se define por separado: puedes enlazar tareas o actividades sin imponer una secuencia inexistente.</p>
           <form id="v85-seq-form">
             <label>Nivel de dependencia
               <select id="v85-seq-level"><option value="tarea">Entre tareas</option><option value="actividad">Entre actividades</option></select>
@@ -509,10 +514,10 @@
           <div id="v85-product-suggestions" class="v85-records" aria-live="polite"></div>
           <h3>Tabla de tareas capturadas</h3>
           <div id="v85-task-table" class="v85-table-scroll" aria-live="polite"></div>
-        </article>
+        </details>
 
-        <article class="card" id="v85-s5">
-          <h2>5. Características de los productos (opcional)</h2>
+        <details class="card v85-accordion" id="v85-s5">
+          <summary><h2>5. Características de los productos (opcional)</h2></summary>
           <p>Las características se añaden a los productos ya registrados en el apartado 4. No se duplican productos al añadir componentes.</p>
           <form id="v85-feature-form">
             <label>Producto
@@ -527,22 +532,19 @@
             <label>Detalle (opcional)
               <textarea id="v85-feature-desc" maxlength="3000" rows="2"></textarea>
             </label>
-            <label>Orden visual
-              <input id="v85-feature-order" type="number" min="0" max="100000" value="0">
-            </label>
             <div class="form-actions"><button type="submit">Guardar característica</button><button type="button" id="v85-feature-clear" class="outline">Nueva</button></div>
           </form>
           <div id="v85-feature-list" class="v85-records" aria-live="polite"></div>
-        </article>
+        </details>
 
-        <article class="card" id="v85-diagram-card">
-          <h2>Diagrama generado desde la captura manual</h2>
+        <details class="card v85-accordion" id="v85-diagram-card">
+          <summary><h2>Diagrama generado desde la captura manual</h2></summary>
           <label>Proceso a visualizar
             <select id="v85-diagram-process"><option value="">Selecciona un proceso</option></select>
           </label>
           <div id="v85-diagram" aria-live="polite"></div>
           <p class="subtle">Diagrama de trabajo: muestra relaciones capturadas, no una certificación del cumplimiento de la norma. Los documentos de la Biblioteca siguen disponibles como fuentes de contraste.</p>
-        </article>
+        </details>
       </section>
     </section>
   </section>
@@ -551,6 +553,6 @@
 </main>
 <script src="config.js"></script>
 <script src="app.js?v=0.8.0" defer></script>
-<script src="constructor.js?v=0.8.5-3" defer></script>
+<script src="constructor.js?v=0.8.5-4" defer></script>
 </body>
 </html>

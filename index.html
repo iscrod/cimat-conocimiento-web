@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>CIMAT | Plataforma de extracción de conocimiento</title>
-  <link rel="stylesheet" href="styles.css?v=0.8.2a-1">
+  <link rel="stylesheet" href="styles.css?v=0.8.52-1">
 </head>
 <body>
 <main class="shell">
   <header>
     <div>
-      <span class="tag">PROTOTIPO ACADÉMICO · V0.8.0</span>
+      <span class="tag">PROTOTIPO ACADÉMICO · V0.8.52</span>
       <h1>Plataforma de extracción de conocimiento</h1>
       <p>Gestión organizacional y mejora de procesos de software · ISO/IEC 29110</p>
     </div>
@@ -300,7 +300,7 @@
             </label>
             <label class="checkline">
               <input type="checkbox" id="documento-derechos" required>
-              Declaro que tengo autorización para almacenar y procesar este documento en CIMAT.
+              Declaro que tengo autorización para almacenar este documento de referencia en CIMAT.
             </label>
             <button type="submit" id="documento-subir">Subir documento</button>
           </form>
@@ -308,322 +308,237 @@
         </article>
         <article class="card">
           <h2>Dominios y archivos registrados</h2>
-          <p>Los registros son independientes de las entrevistas. Aún no se extraen automáticamente tareas ni se generan preguntas.</p>
+          <p>Documentos de referencia del dominio. La captura de procesos y tareas se realiza manualmente en Modelo y diagramas.</p>
           <div id="dominio-lista" aria-live="polite">Cargando...</div>
           <h3>Documentos cargados</h3>
           <div id="documento-lista" aria-live="polite">Cargando...</div>
         </article>
-        <article class="card">
-          <h2>3. Procesar y revisar documentos · v0.7</h2>
-          <p>Extrae el texto por página y detecta encabezados candidatos. El documento original permanece privado; las sugerencias <strong>no representan conocimiento normativo aprobado</strong>.</p>
-          <label>Documento registrado
-            <select id="analisis-documento"><option value="">Selecciona un archivo</option></select>
-          </label>
-          <div class="form-actions">
-            <button type="button" id="analisis-procesar">Procesar PDF</button>
-            <button type="button" id="analisis-recargar" class="outline">Consultar análisis</button>
-          </div>
-          <p id="analisis-estado" class="form-status" role="status" aria-live="polite"></p>
-          <div id="analisis-resumen" class="hidden"></div>
-          <section id="analisis-inspeccion" class="hidden">
-            <h3>Verificar texto por página</h3>
-            <p class="subtle">Referencia a la página física del PDF; la numeración impresa puede ser diferente. Si una página no tiene texto, el documento podría requerir OCR.</p>
-            <label>Página del documento
-              <select id="analisis-pagina"></select>
-            </label>
-            <pre id="analisis-texto" class="analisis-texto" aria-label="Texto extraído de la página seleccionada"></pre>
-            <h3>Encabezados candidatos: revisión humana</h3>
-            <p class="subtle">Las coincidencias son detectadas por reglas de numeración; pueden existir falsas identificaciones o encabezados omitidos. Revisa la página antes de aprobar.</p>
-            <div id="analisis-secciones"></div>
-          </section>
-        </article>
+
       </section>
-      <article class="card muted">
-        <h2>Modelo de conocimiento estructurado · v0.8.2a</h2>
-        <p>Ya puedes clasificar elementos, relacionarlos y visualizarlos en <strong>Modelo y diagramas</strong>. Los registros de ejemplo permanecen en estado propuesto hasta revisión documental.</p>
-      </article>
+      <article class="card muted"><h2>Biblioteca documental · v0.8.52</h2><p>Aquí se conservan las fuentes originales. No se procesan automáticamente los documentos ni se extraen tablas; el constructor manual se encuentra en <strong>Modelo y diagramas</strong>.</p></article>
     </section>
 
     <section data-panel="modelo" class="hidden" role="tabpanel">
       <article class="card">
-        <h2>Modelo de conocimiento estructurado · v0.8.2a</h2>
-        <p>Representa procesos, actividades, tareas, roles, productos, componentes y sus relaciones. Los registros de esta pantalla son una <strong>estructura de referencia</strong>, no una evaluación de cumplimiento ni respuestas individuales.</p>
-        <p id="modelo-estado" class="form-status" role="status">Comprobando autorización...</p>
-        <div id="modelo-duplicados" class="form-status" aria-live="polite"></div>
+        <h2>Constructor manual de metodologías · v0.8.52</h2>
+        <p>Registra la estructura de una norma directamente en CIMAT. No se importan ni procesan documentos automáticamente. Los registros de análisis anteriores se conservan en la base de datos, separados del constructor manual.</p>
+        <p id="v85-status" class="form-status" role="status" aria-live="polite">Abre este apartado como administrador para comenzar.</p>
       </article>
-      <section id="modelo-controles" class="hidden">
-        <article class="card">
-          <h2>1. Seleccionar dominio documental</h2>
-          <label>Dominio / edición
-            <select id="modelo-dominio"><option value="">Selecciona un dominio</option></select>
+      <section id="v85-controls" class="hidden">
+        <article class="card" id="v85-s1">
+          <h2>1. Selección del dominio y fuente de referencia</h2>
+          <label>Dominio o edición
+            <select id="v85-domain"><option value="">Selecciona el dominio</option></select>
           </label>
-          <p class="subtle">Los datos y diagramas corresponden exclusivamente al dominio seleccionado. Cada edición mantiene su propia fuente; las propuestas automáticas requieren validación experta.</p>
-          <button id="modelo-recargar" type="button" class="outline">Actualizar el modelo</button>
-        </article>
-
-        <article class="card" id="auditoria-panel">
-          <h2>2. Auditoría del conocimiento · v0.8.2a</h2>
-          <p>Detecta problemas en la estructura extraída: jerarquías, posibles duplicados, relaciones, evidencias y cobertura. El diagnóstico es de <strong>solo lectura</strong>: no modifica, fusiona ni aprueba registros.</p>
-          <div class="form-actions">
-            <button type="button" id="auditoria-ejecutar">Auditar dominio seleccionado</button>
-            <button type="button" id="auditoria-exportar" class="outline" disabled>Exportar diagnóstico CSV</button>
-            <button type="button" class="outline" id="auditoria-ir-diagrama">Ir al diagrama</button>
-          </div>
-          <p id="auditoria-estado" class="form-status" role="status" aria-live="polite">Selecciona un dominio y ejecuta la auditoría.</p>
-          <div id="auditoria-resumen" class="auditoria-resumen" aria-label="Resumen de auditoría"></div>
           <div class="grid compact-grid">
-            <label>Filtrar por prioridad
-              <select id="auditoria-prioridad">
-                <option value="todos">Todas las prioridades</option>
-                <option value="alta">Alta</option>
-                <option value="media">Media</option>
-                <option value="baja">Baja</option>
-              </select>
+            <label>Documento de la Biblioteca (referencia opcional en la captura)
+              <select id="v85-doc"><option value="">Sin documento asignado</option></select>
             </label>
-            <label>Filtrar por categoría
-              <select id="auditoria-categoria">
-                <option value="todos">Todas las categorías</option>
-                <option value="jerarquia">Jerarquía</option>
-                <option value="duplicados">Posibles duplicados</option>
-                <option value="relaciones">Relaciones</option>
-                <option value="fuentes">Evidencias</option>
-                <option value="cobertura">Cobertura</option>
-              </select>
+            <label>Página física del documento (opcional)
+              <input id="v85-page" type="number" min="1" step="1" placeholder="Por ejemplo: 30">
             </label>
           </div>
-          <p class="subtle" id="auditoria-contador" aria-live="polite"></p>
-          <div id="auditoria-lista" class="auditoria-lista" aria-live="polite"></div>
-          <button id="auditoria-mas" type="button" class="outline" hidden>Ver más</button>
-          <p class="subtle">Las incidencias son hipótesis técnicas. En ISO/IEC 29110 se comprueban adicionalmente patrones GP/IS; en otras metodologías se aplican solo reglas generales. Una cita registrada no garantiza interpretación correcta ni cumplimiento normativo.</p>
+          <div class="form-actions"><button type="button" id="v85-refresh" class="outline">Actualizar datos del dominio</button></div>
+          <p class="subtle">La referencia seleccionada se guarda con cada nuevo registro; puedes cambiarla antes de capturar otro. Los registros sin fuente permanecen como información de trabajo, no como conformidad normativa verificada.</p>
         </article>
 
-        <article class="card" id="revision-panel">
-          <h2>3. Revisión y consolidación · v0.8.2b</h2>
-          <p>Revisa las propuestas frente a la fuente. Puedes reclasificar, aprobar, descartar o restaurar una ficha. Las fusiones son <strong>reversibles y no destructivas</strong>: conservan los elementos, las citas y las relaciones originales.</p>
-          <p id="revision-estado" class="form-status" role="status" aria-live="polite">Selecciona un dominio y consulta los elementos.</p>
-          <div class="form-actions">
-            <button id="revision-recargar" type="button" class="outline">Actualizar revisiones</button>
-          </div>
-          <div class="grid compact-grid">
-            <label>Tipo de ficha
-              <select id="revision-entidad">
-                <option value="elemento">Elemento de conocimiento</option>
-                <option value="relacion">Relación entre elementos</option>
-              </select>
-            </label>
-            <label>Ficha que deseas revisar
-              <select id="revision-registro"><option value="">Selecciona una ficha</option></select>
-            </label>
-          </div>
-          <div id="revision-detalle" class="auditoria-lista" aria-live="polite"></div>
-          <h3>Decisión documentada</h3>
-          <div id="revision-elemento-opciones" class="grid compact-grid">
-            <label>Categoría corregida
-              <select id="revision-tipo">
-                <option value="proceso">Proceso</option>
-                <option value="actividad">Actividad</option>
-                <option value="tarea">Tarea</option>
-                <option value="rol">Rol</option>
-                <option value="producto">Producto de trabajo</option>
-                <option value="componente">Componente de producto</option>
-                <option value="concepto">Concepto</option>
-              </select>
-            </label>
-            <label>Ficha canónica para una posible fusión
-              <select id="revision-canonico"><option value="">No fusionar</option></select>
-            </label>
-          </div>
-          <label>Justificación de la decisión (mínimo 12 caracteres)
-            <textarea id="revision-motivo" rows="3" minlength="12" maxlength="1000" placeholder="Indica por qué corresponde esa categoría o por qué dos fichas representan el mismo elemento."></textarea>
-          </label>
-          <label class="checkline">
-            <input type="checkbox" id="revision-confirmacion">
-            Confirmo que comparé esta decisión con la fuente documental y que no estoy equiparando una mención con cumplimiento normativo.
-          </label>
-          <div class="form-actions">
-            <button id="revision-reclasificar" type="button" class="outline">Corregir categoría</button>
-            <button id="revision-aprobar" type="button">Aprobar ficha</button>
-            <button id="revision-descartar" type="button" class="outline">Descartar ficha</button>
-            <button id="revision-restablecer" type="button" class="outline">Volver a propuesta</button>
-            <button id="revision-fusionar" type="button" class="outline">Consolidar duplicado</button>
-            <button id="revision-deshacer" type="button" class="outline">Deshacer consolidación</button>
-          </div>
-          <p class="subtle">La consolidación no traslada ni elimina las evidencias: mantiene ambas fichas y sus relaciones originales, pero el diagrama utiliza una representación canónica. Los cambios se registran con fecha, autor, motivo y estado anterior y posterior.</p>
-          <h3>Últimas decisiones del dominio</h3>
-          <div id="revision-historial" class="auditoria-lista" aria-live="polite"></div>
-        </article>
-
-        <article class="card">
-          <h2>4. Propuestas mediante IA · v0.8</h2>
-          <p>El analizador puede examinar hasta <strong>dos páginas por solicitud</strong> del documento ya procesado e identificar procesos, tareas, roles, productos, componentes y relaciones. Todas las propuestas deben verificarse y aprobarse por un experto.</p>
-          <p id="ia-configuracion" class="form-status" role="status">Comprobando disponibilidad del proveedor de IA...</p>
-          <form id="ia-form">
-            <label>Documento del dominio
-              <select id="ia-documento" required><option value="">Selecciona un PDF procesado</option></select>
-            </label>
+        <article class="card" id="v85-s2">
+          <h2>2. Catálogo de roles</h2>
+          <p>Un rol puede ser compartido por varias metodologías. Al reutilizarlo se crea una asociación con el dominio, no una copia del rol; la función particular puede especificarse sin alterar otras ediciones.</p>
+          <form id="v85-role-new">
+            <h3>Registrar un rol nuevo</h3>
             <div class="grid compact-grid">
-              <label>Página inicial (PDF)
-                <input id="ia-pagina-inicio" type="number" required min="1" max="200" step="1" value="1">
+              <label>Rol
+                <input id="v85-role-name" required minlength="3" maxlength="160" list="v85-role-hints" placeholder="Ejemplo: Gestor del Proyecto">
+                <datalist id="v85-role-hints"></datalist>
               </label>
-              <label>Página final (máximo dos)
-                <input id="ia-pagina-fin" type="number" required min="1" max="200" step="1" value="1">
+              <label>Abreviación
+                <input id="v85-role-code" required minlength="1" maxlength="30" placeholder="GP">
               </label>
             </div>
-            <label class="checkline">
-              <input id="ia-consentimiento" type="checkbox" required>
-              Confirmo que tengo autorización para enviar el texto seleccionado a un proveedor externo de IA para su análisis.
+            <label>Función del rol
+              <textarea id="v85-role-function" required minlength="3" maxlength="2000" rows="2" placeholder="Descripción basada en la metodología"></textarea>
             </label>
-            <p class="subtle">Los documentos completos permanecen privados en Supabase. Solo se transmiten las páginas elegidas. El nivel gratuito del proveedor puede utilizar los datos para mejorar sus servicios; no utilices documentos confidenciales sin autorización específica.</p>
-            <div class="form-actions">
-              <button id="ia-enviar" type="submit">Analizar con IA</button>
-              <button id="ia-estado-boton" type="button" class="outline">Comprobar configuración</button>
-              <button id="ia-actualizar" type="button" class="outline">Consultar ejecuciones</button>
-            </div>
+            <button type="submit">Crear y vincular rol al dominio</button>
           </form>
-          <section class="card muted" aria-labelledby="ia-total-titulo">
-            <h3 id="ia-total-titulo">Análisis integral del documento · v0.8.1</h3>
-            <p>Un solo comando revisa las páginas con texto, por tramos consecutivos de una o dos páginas. Compara cada propuesta con el catálogo existente y guarda referencias adicionales sin duplicar la ficha cuando coincide el nombre o código canónico.</p>
-            <p class="subtle">Este procedimiento puede requerir múltiples solicitudes a Gemini, sujetas a límites y posibles cargos de tu cuenta. Debes conservar abierta la pestaña; si Gemini devuelve un error 503 temporal, el sistema intentará recuperarse con dos pausas; si se interrumpe, podrás reanudar las páginas pendientes. Ningún elemento queda aprobado automáticamente.</p>
-            <label class="checkline">
-              <input type="checkbox" id="ia-total-consentimiento">
-              Autorizo expresamente enviar <strong>todas las páginas con texto de este documento</strong> a Gemini para su análisis externo. Confirmo que tengo permiso para esa transferencia.
+          <form id="v85-role-link">
+            <h3>Reutilizar un rol existente</h3>
+            <label>Rol registrado en otros modelos
+              <select id="v85-role-existing" required><option value="">Selecciona un rol</option></select>
             </label>
-            <div class="form-actions">
-              <button type="button" id="ia-total-iniciar">Analizar todo el documento</button>
-              <button type="button" id="ia-total-detener" class="outline hidden">Detener después del tramo actual</button>
-            </div>
-            <p id="ia-total-estado" class="form-status" role="status" aria-live="polite">El análisis integral no se ha iniciado.</p>
-          </section>
-          <p id="ia-resultado" class="form-status" role="status" aria-live="polite"></p>
-          <h3>Historial de propuestas</h3>
-          <div id="ia-historial" aria-live="polite">Sin consultas todavía.</div>
-          <p class="subtle">Para activar IA: configura la clave secreta <code>CIMAT_GEMINI_API_KEY</code> en Supabase → Edge Functions → Secrets; nunca la escribas en esta página ni en GitHub. Después revisa las propuestas en el catálogo y el diagrama.</p>
-        </article>
-        <article class="card">
-          <h2>5. Elementos del conocimiento</h2>
-          <p>Clasifica un elemento y registra su fuente. Para aprobarlo debes asociarlo a una página real del PDF y verificarlo.</p>
-          <form id="modelo-elemento-form">
-            <label>Elemento existente
-              <select id="modelo-elemento-id"><option value="">+ Nuevo elemento</option></select>
+            <label>Función particular en este dominio (opcional)
+              <textarea id="v85-role-local" maxlength="2000" rows="2" placeholder="Solo si difiere de la función general"></textarea>
             </label>
-            <div class="grid compact-grid">
-              <label>Categoría
-                <select id="modelo-elemento-tipo" required>
-                  <option value="proceso">Proceso</option>
-                  <option value="actividad">Actividad</option>
-                  <option value="tarea">Tarea</option>
-                  <option value="rol">Rol</option>
-                  <option value="producto">Producto de trabajo</option>
-                  <option value="componente">Componente de producto</option>
-                  <option value="concepto">Otro concepto</option>
-                </select>
-              </label>
-              <label>Código, cuando exista
-                <input id="modelo-elemento-codigo" maxlength="100" placeholder="PM.1.1">
-              </label>
-            </div>
-            <label>Denominación del elemento
-              <input id="modelo-elemento-titulo" required maxlength="300" minlength="3" placeholder="Revisar el Enunciado de Trabajo">
-            </label>
-            <label>Descripción opcional
-              <textarea id="modelo-elemento-descripcion" rows="2" maxlength="4000"></textarea>
-            </label>
-            <div class="grid compact-grid">
-              <label>Archivo de referencia
-                <select id="modelo-elemento-documento"><option value="">Sin archivo (solo propuesta)</option></select>
-              </label>
-              <label>Página física del PDF
-                <input id="modelo-elemento-pagina" type="number" min="1" max="200" step="1" placeholder="18">
-              </label>
-            </div>
-            <div class="grid compact-grid">
-              <label>Orden de presentación
-                <input id="modelo-elemento-orden" type="number" value="0" min="0" max="1000000" step="1">
-              </label>
-              <label>Estado de revisión
-                <select id="modelo-elemento-estado">
-                  <option value="propuesto">Propuesto</option>
-                  <option value="aprobado">Aprobado por revisión</option>
-                  <option value="descartado">Descartado</option>
-                </select>
-              </label>
-            </div>
-            <div class="form-actions">
-              <button type="submit" id="modelo-elemento-guardar">Guardar elemento</button>
-              <button type="button" id="modelo-elemento-limpiar" class="outline">Nuevo / limpiar</button>
-            </div>
+            <button type="submit" class="outline">Vincular o actualizar función del rol</button>
           </form>
-          <p class="form-status" id="modelo-elemento-estado-mensaje" role="status"></p>
-          <h3>Elementos registrados</h3>
-          <div id="modelo-elementos-lista" class="modelo-directorio" aria-live="polite"></div>
+          <div id="v85-role-list" class="v85-records" aria-live="polite"></div>
         </article>
 
-        <article class="card">
-          <h2>6. Relaciones entre elementos</h2>
-          <p>Las conexiones explican el proceso: <strong>proceso contiene actividad; actividad contiene tarea; rol participa en tarea; tarea utiliza o genera producto; producto contiene componentes.</strong></p>
-          <form id="modelo-relacion-form">
-            <label>Relación existente
-              <select id="modelo-relacion-id"><option value="">+ Nueva relación</option></select>
+        <article class="card" id="v85-s3">
+          <h2>3. Procesos y actividades</h2>
+          <form id="v85-process-form">
+            <h3>Proceso</h3>
+            <label>Seleccionar para editar o crear uno nuevo
+              <select id="v85-process-edit"><option value="">+ Nuevo proceso</option></select>
             </label>
             <div class="grid compact-grid">
-              <label>Elemento de origen
-                <select id="modelo-relacion-origen" required><option value="">Selecciona</option></select>
+              <label>Código o abreviación (opcional)
+                <input id="v85-process-code" maxlength="90" placeholder="GP">
               </label>
-              <label>Tipo de relación
-                <select id="modelo-relacion-tipo" required>
-                  <option value="contiene">Contiene</option>
-                  <option value="participa">Participa en</option>
-                  <option value="ejecuta">Ejecuta</option>
-                  <option value="utiliza">Utiliza (entrada)</option>
-                  <option value="genera">Genera (salida)</option>
-                  <option value="actualiza">Actualiza</option>
-                  <option value="verifica">Verifica</option>
-                  <option value="precede">Precede a</option>
-                  <option value="referencia">Referencia</option>
-                </select>
+              <label>Nombre del proceso
+                <input id="v85-process-name" minlength="3" maxlength="250" required placeholder="Gestión del Proyecto">
               </label>
             </div>
-            <label>Elemento de destino
-              <select id="modelo-relacion-destino" required><option value="">Selecciona</option></select>
+            <label>Descripción (opcional)
+              <textarea id="v85-process-desc" maxlength="4000" rows="2"></textarea>
             </label>
-            <label>Explicación adicional (opcional)
-              <input id="modelo-relacion-detalle" maxlength="1000" placeholder="La tarea produce una versión revisada del documento">
+            <label>Orden visual
+              <input id="v85-process-order" type="number" min="0" max="100000" value="0">
             </label>
-            <div class="grid compact-grid">
-              <label>Archivo de referencia
-                <select id="modelo-relacion-documento"><option value="">Sin archivo (solo propuesta)</option></select>
-              </label>
-              <label>Página física del PDF
-                <input id="modelo-relacion-pagina" type="number" min="1" max="200" step="1" placeholder="18">
-              </label>
-              <label>Estado de revisión
-                <select id="modelo-relacion-estado">
-                  <option value="propuesto">Propuesto</option>
-                  <option value="aprobado">Aprobado por revisión</option>
-                  <option value="descartado">Descartado</option>
-                </select>
-              </label>
-            </div>
-            <div class="form-actions">
-              <button id="modelo-relacion-guardar" type="submit">Guardar relación</button>
-              <button id="modelo-relacion-limpiar" type="button" class="outline">Nueva / limpiar</button>
-            </div>
+            <div class="form-actions"><button type="submit">Guardar proceso</button><button type="button" id="v85-process-clear" class="outline">Nuevo</button></div>
           </form>
-          <p class="form-status" id="modelo-relacion-estado-mensaje" role="status"></p>
-          <h3>Relaciones registradas</h3>
-          <div id="modelo-relaciones-lista" class="modelo-directorio" aria-live="polite"></div>
+          <form id="v85-activity-form">
+            <h3>Actividad (opcional según la metodología)</h3>
+            <label>Seleccionar actividad para editar
+              <select id="v85-activity-edit"><option value="">+ Nueva actividad</option></select>
+            </label>
+            <label>Proceso al que pertenece
+              <select id="v85-activity-parent" required><option value="">Selecciona un proceso</option></select>
+            </label>
+            <div class="grid compact-grid">
+              <label>Código (opcional)
+                <input id="v85-activity-code" maxlength="90" placeholder="GP.1">
+              </label>
+              <label>Nombre de la actividad
+                <input id="v85-activity-name" minlength="3" maxlength="250" required placeholder="Planificación del Proyecto">
+              </label>
+            </div>
+            <label>Descripción (opcional)
+              <textarea id="v85-activity-desc" maxlength="4000" rows="2"></textarea>
+            </label>
+            <label>Orden visual
+              <input id="v85-activity-order" type="number" min="0" max="100000" value="0">
+            </label>
+            <div class="form-actions"><button type="submit">Guardar actividad</button><button type="button" id="v85-activity-clear" class="outline">Nueva</button></div>
+          </form>
+          <div id="v85-process-list" class="v85-records" aria-live="polite"></div>
         </article>
 
-        <article class="card">
-          <h2>7. Diagrama generado desde el modelo</h2>
-          <p>Los roles aparecen a la izquierda, las tareas y su secuencia al centro, y los productos de entrada y salida a la derecha. No es una imagen fija: se construye a partir de los elementos y relaciones guardados.</p>
-          <label>Proceso o actividad que deseas representar
-            <select id="modelo-diagrama-raiz"><option value="">Selecciona un proceso o actividad</option></select>
+        <article class="card" id="v85-s4">
+          <h2>4. Tabla relacional: tareas, roles y productos</h2>
+          <p>Primero registra los productos con un nombre único por dominio; después selecciónalos como entrada, salida o producto actualizado en tantas tareas como corresponda. Una coincidencia de productos no crea por sí sola una relación de precedencia.</p>
+          <form id="v85-product-form">
+            <h3>Catálogo de productos</h3>
+            <label>Producto para editar o nuevo
+              <select id="v85-product-edit"><option value="">+ Nuevo producto</option></select>
+            </label>
+            <label>Nombre del producto
+              <input id="v85-product-name" required minlength="3" maxlength="250" placeholder="Plan del Proyecto">
+            </label>
+            <label>Descripción (opcional)
+              <textarea id="v85-product-desc" maxlength="4000" rows="2"></textarea>
+            </label>
+            <div class="form-actions"><button type="submit">Guardar producto</button><button type="button" id="v85-product-clear" class="outline">Nuevo</button></div>
+          </form>
+          <form id="v85-task-form">
+            <h3>Captura de tarea</h3>
+            <label>Tarea para editar o nueva
+              <select id="v85-task-edit"><option value="">+ Nueva tarea</option></select>
+            </label>
+            <div class="grid compact-grid">
+              <label>Proceso
+                <select id="v85-task-process" required><option value="">Selecciona proceso</option></select>
+              </label>
+              <label>Actividad (opcional)
+                <select id="v85-task-activity"><option value="">Sin actividad</option></select>
+              </label>
+            </div>
+            <div class="grid compact-grid">
+              <label>Código de tarea (opcional)
+                <input id="v85-task-code" maxlength="90" placeholder="GP.1.1">
+              </label>
+              <label>Orden visual (no implica dependencia)
+                <input id="v85-task-order" type="number" min="0" max="100000" value="0">
+              </label>
+            </div>
+            <label>Descripción o nombre de la tarea
+              <input id="v85-task-name" minlength="3" maxlength="500" required placeholder="Revisar el Enunciado de Trabajo">
+            </label>
+            <label>Detalle de la tarea (opcional)
+              <textarea id="v85-task-desc" maxlength="4000" rows="2"></textarea>
+            </label>
+            <div class="grid compact-grid">
+              <label>Roles participantes
+                <select id="v85-task-roles" multiple size="5"></select>
+              </label>
+              <label>Productos de entrada
+                <select id="v85-task-inputs" multiple size="5"></select>
+              </label>
+              <label>Productos de salida
+                <select id="v85-task-outputs" multiple size="5"></select>
+              </label>
+              <label>Productos que se actualizan
+                <select id="v85-task-updates" multiple size="5"></select>
+              </label>
+            </div>
+            <p class="subtle">Para seleccionar varios elementos utiliza Ctrl o Shift al hacer clic; en dispositivos táctiles, selecciona cada opción. Las cuatro listas pueden quedar vacías cuando la fuente no define información.</p>
+            <div class="form-actions"><button type="submit">Guardar tarea y sus relaciones</button><button type="button" id="v85-task-clear" class="outline">Nueva tarea</button></div>
+          </form>
+          <h3>Secuencia explícita</h3>
+          <p>La precedencia es independiente del orden visual. Puedes enlazar tareas o actividades y representar actividades paralelas sin imponer un orden inexistente.</p>
+          <form id="v85-seq-form">
+            <label>Nivel de dependencia
+              <select id="v85-seq-level"><option value="tarea">Entre tareas</option><option value="actividad">Entre actividades</option></select>
+            </label>
+            <div class="grid compact-grid">
+              <label>Se realiza primero
+                <select id="v85-seq-from" required><option value="">Selecciona</option></select>
+              </label>
+              <label>Después sigue
+                <select id="v85-seq-to" required><option value="">Selecciona</option></select>
+              </label>
+            </div>
+            <label>Justificación o condición de la dependencia (opcional)
+              <input id="v85-seq-note" maxlength="1000" placeholder="Solo cuando la fuente establezca la precedencia">
+            </label>
+            <button type="submit" class="outline">Registrar precedencia</button>
+          </form>
+          <div id="v85-seq-list" class="v85-records" aria-live="polite"></div>
+          <h3>Tabla de tareas capturadas</h3>
+          <div id="v85-task-table" class="v85-table-scroll" aria-live="polite"></div>
+        </article>
+
+        <article class="card" id="v85-s5">
+          <h2>5. Características de los productos (opcional)</h2>
+          <p>Las características se añaden a los productos ya registrados en el apartado 4. No se duplican productos al añadir componentes.</p>
+          <form id="v85-feature-form">
+            <label>Producto
+              <select id="v85-feature-product" required><option value="">Selecciona producto</option></select>
+            </label>
+            <label>Característica para editar o nueva
+              <select id="v85-feature-edit"><option value="">+ Nueva característica</option></select>
+            </label>
+            <label>Nombre de característica o componente
+              <input id="v85-feature-name" required minlength="3" maxlength="300" placeholder="Alcance, entregables, criterios…">
+            </label>
+            <label>Detalle (opcional)
+              <textarea id="v85-feature-desc" maxlength="3000" rows="2"></textarea>
+            </label>
+            <label>Orden visual
+              <input id="v85-feature-order" type="number" min="0" max="100000" value="0">
+            </label>
+            <div class="form-actions"><button type="submit">Guardar característica</button><button type="button" id="v85-feature-clear" class="outline">Nueva</button></div>
+          </form>
+          <div id="v85-feature-list" class="v85-records" aria-live="polite"></div>
+        </article>
+
+        <article class="card" id="v85-diagram-card">
+          <h2>Diagrama generado desde la captura manual</h2>
+          <label>Proceso a visualizar
+            <select id="v85-diagram-process"><option value="">Selecciona un proceso</option></select>
           </label>
-          <div class="modelo-diagrama-scroll" role="region" tabindex="0" aria-label="Diagrama de conocimiento desplazable">
-            <div id="modelo-diagrama" aria-live="polite"></div>
-          </div>
-          <p class="subtle">Los conectores representan relaciones declaradas; el orden visible de las tareas es provisional. La correspondencia exacta con la fuente y el cumplimiento requieren revisión experta.</p>
+          <div id="v85-diagram" aria-live="polite"></div>
+          <p class="subtle">Diagrama de trabajo: muestra relaciones capturadas, no una certificación del cumplimiento de la norma. Los documentos de la Biblioteca siguen disponibles como fuentes de contraste.</p>
         </article>
       </section>
     </section>
@@ -633,11 +548,6 @@
 </main>
 <script src="config.js"></script>
 <script src="app.js?v=0.8.0" defer></script>
-<script src="analisis.js?v=0.8.0" defer></script>
-<script src="modelo.js?v=0.8.2b-2" defer></script>
-<script src="ia.js?v=0.8.1-3" defer></script>
-<script src="auditoria-core.js?v=0.8.2b-1" defer></script>
-<script src="auditoria.js?v=0.8.2b-2" defer></script>
-<script src="revision.js?v=0.8.2b-2" defer></script>
+<script src="constructor.js?v=0.8.52-1" defer></script>
 </body>
 </html>

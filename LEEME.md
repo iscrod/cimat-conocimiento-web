@@ -1,3 +1,61 @@
+# CIMAT v0.8.52 — Constructor manual de metodologías
+
+**Estado:** Implementado en GitHub y Supabase, pendiente de prueba funcional con la sesión del administrador y revisión visual en navegador.
+
+## Arquitectura de cinco apartados
+
+1. **Selección de dominio y fuentes:** conservar normas, metodologías, ediciones y documentos en Biblioteca. Al registrar una ficha puede asociarse una fuente y página física; no existe procesamiento automático de archivos en esta versión.
+2. **Roles:** rol, abreviación y función global. Existe un catálogo compartido; la asociación por dominio permite una función específica sin duplicar el registro global.
+3. **Procesos y actividades:** nombre obligatorio, código y descripción opcionales, orden visual y asociación de cada actividad a su proceso. Algunas metodologías no tienen nivel de actividad.
+4. **Tareas y relaciones:** tarea asociada a proceso y actividad opcional, rol(es), producto(s) de entrada, salida o actualizados, orden visual y precedencias explícitas. Los productos se registran una vez por dominio y se reutilizan. El orden visual nunca implica una dependencia obligatoria.
+5. **Características de productos:** opcionales, múltiples por producto, con texto, orden y referencia documental propia.
+
+La vista **Diagrama generado** utiliza exclusivamente registros de captura manual. Representa jerarquía, roles, productos, precedencias declaradas y casos en los que un producto aparece como salida de una tarea y entrada de otra. Ese último vínculo **no equivale a una precedencia obligatoria**.
+
+## Compatibilidad y conservación de datos
+
+No se borraron ni sobrescribieron elementos anteriores: los análisis de 2011/2012, sus páginas, las 149 propuestas, 106 relaciones, 254 evidencias y demás metadatos se mantienen en las tablas históricas \`conocimiento_*\`, \`documento_*\` y \`ia_extracciones\`. Los antiguos archivos JavaScript y SQL continúan en GitHub para su posible archivado posterior. Solo se reemplazó la interfaz de Modelo y diagramas por el constructor manual y se quitó de Biblioteca el formulario de procesamiento.
+
+## Modelo nuevo en Supabase
+
+Las migraciones aplicadas son \`cimat_0852_constructor_manual\` y \`cimat_0852_precedencias_actividades\`. El modelo está aislado bajo el prefijo \`cimat_0852_\`:
+
+| Tabla | Función |
+|---|---|
+| \`roles\` | Catálogo global reutilizable |
+| \`roles_dominios\` | Vinculación y función particular |
+| \`procesos\` | Procesos y orden visual |
+| \`actividades\` | Actividades subordinadas a procesos |
+| \`tareas\` | Tareas del proceso, con actividad opcional |
+| \`productos\` | Productos únicos por dominio |
+| \`tareas_roles\` | N:M entre tarea y rol vinculado al dominio |
+| \`tareas_productos\` | N:M entre tarea y producto; flujo entrada/salida/actualiza |
+| \`precedencias\` | Dependencia explícita entre tareas |
+| \`precedencias_actividades\` | Dependencia explícita entre actividades |
+| \`caracteristicas\` | Componentes opcionales de productos |
+
+La función PostgreSQL \`public.cimat_0852_guardar_tarea\` guarda la tarea y sus tres clases de relaciones **en una sola transacción**. Las restricciones impiden referencias entre dominios y las funciones disparadas al insertar precedencias rechazan ciclos. Todas las tablas nuevas tienen **RLS** y políticas de lectura/escritura exclusivas para administradores globales autenticados. No se añadió ninguna clave privada al cliente.
+
+## Guía de uso
+
+1. Abrir [CIMAT](https://iscrod.github.io/cimat-conocimiento-web/), actualizar con Ctrl+F5 e iniciar sesión como administrador.
+2. Ir a **Biblioteca**, registrar el dominio y adjuntar el PDF, DOCX o TXT únicamente como fuente documental.
+3. Ir a **Modelo y diagramas**; seleccionar el dominio y, cuando corresponda, el documento y la página de referencia.
+4. En **Roles**, reutilizar los roles compartidos o crear nuevos.
+5. En **Procesos y actividades**, capturar procesos y sus actividades.
+6. En **Tabla relacional**, registrar los productos; crear cada tarea y seleccionar sus roles/entradas/salidas. Declarar precedencias solo si están respaldadas por la fuente.
+7. En **Características**, agregar opcionalmente los componentes de los productos; consultar el diagrama generado al final.
+
+**Limitaciones:** en esta versión la edición se realiza por ficha; no hay importación automática de tablas ni lectura inteligente de PDF. Los registros se consideran capturas de trabajo y el diagrama no certifica conformidad. Las pruebas de integridad de FK y ciclos se efectuaron dentro de una transacción revertida; quedan pendientes los recorridos completos desde el navegador autenticado.
+
+## Referencias técnicas
+
+- [Supabase — Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security)
+- [Supabase — Database Functions](https://supabase.com/docs/guides/database/functions)
+- [PostgreSQL — Foreign Keys and Constraints](https://www.postgresql.org/docs/current/ddl-constraints.html)
+
+---
+
 # CIMAT v0.8.2b — Revisión y consolidación controlada
 
 ## Funciones disponibles

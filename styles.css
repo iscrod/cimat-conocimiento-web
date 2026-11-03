@@ -180,3 +180,6 @@ select[multiple] option{padding:7px 5px}
 .v85-inline-feedback.v85-success{color:#15593e;background:#e7f5ec;border:1px solid #b5dbc4;font-weight:600}
 .v85-inline-feedback.error{color:#912b2b;background:#fff1f1;border:1px solid #e2b6b6}
 @media(max-width:640px){.v85-accordion > summary h2{font-size:1rem}.v85-check-field{padding:9px}}
+
+/* Asegurar que las etiquetas opcionales ocultas respeten el atributo hidden. */
+#v85-activity-code-wrap[hidden]{display:none!important}

@@ -32,7 +32,7 @@ Deno.serve(async(req:Request)=>{
   // Plan del documento completo: devuelve solo números de página y no transmite texto a Gemini.
   if(b.accion==="plan"){
     const id=b.documento_id;
-    if(typeof id!=="string"||!/^[\\da-f]{8}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{12}$/i.test(id))
+    if(typeof id!=="string"||!/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(id))
       return reply(400,"Identificador documental inválido");
     const {data:docPlan,error:docPlanErr}=await service.from("documentos_dominio")
       .select("id,dominio_id,uso_autorizado_declarado").eq("id",id).maybeSingle();
@@ -132,7 +132,7 @@ Deno.serve(async(req:Request)=>{
     // de tabla son referencias documentales, no identificadores del producto.
     const rank=(e:{estado?:string,origen?:string,codigo?:string})=>
       (e.estado==="aprobado"?0:e.origen==="manual"?1:2)+
-      (/^Table\\s+\\d+$/i.test(e.codigo||"")?1:0);
+      (/^Table\s+\d+$/i.test(e.codigo||"")?1:0);
     const known=[...(existing||[])].sort((a,b)=>rank(a)-rank(b));
     const refs=new Map<string,string>();
     const candidates=Array.isArray(parsed.elementos)?parsed.elementos.slice(0,12):[];

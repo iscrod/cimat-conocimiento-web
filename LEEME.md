@@ -1,3 +1,37 @@
+# CIMAT v0.8.2a — Auditoría automática de conocimiento (solo lectura)
+
+## Resultado de prueba en Supabase (3 de noviembre de 2026)
+
+La auditoría se ejecutó sobre el dominio peruano **NTP-RT-ISO/IEC TR 29110-5-1-2:2012**, con 83 páginas, 149 elementos, 106 relaciones y 254 evidencias. Detectó **121 avisos**: 42 de prioridad alta, 35 media y 44 baja.
+
+Por categoría: 70 avisos de relaciones, 35 de jerarquía, 8 de posibles duplicados y 8 de cobertura. **Cero avisos en la regla básica de existencia de fuente**, lo cual no demuestra que las citas ni las interpretaciones sean correctas.
+
+### Interfaz
+
+En **Modelo y diagramas → Auditoría del conocimiento · v0.8.2a** el administrador puede:
+
+- Ejecutar la auditoría de la edición seleccionada, sin mezclar dominios.
+- Consultar un resumen por prioridad y filtrar por categoría.
+- Revisar cada aviso y localizar su ficha o relación asociada.
+- Exportar los hallazgos como CSV, con protección básica contra fórmulas incrustadas.
+
+La lógica funciona en `auditoria-core.js` y su presentación en `auditoria.js`. Se consultan datos mediante la sesión autenticada y las políticas RLS. **No se ejecuta ninguna operación de escritura** al auditar. Las reglas de numeración GP/IS se activan únicamente para el dominio 29110 y se consideran hipótesis para revisar frente al PDF, no requisitos automáticamente certificados.
+
+### Evidencia de fallos relevantes
+
+- Actividades `GP.2`, `GP.3`, `IS.3`, `IS.5`: ausentes o clasificadas en categorías distintas de las esperadas.
+- `IS.2`: al menos dos fichas incompatibles, clasificadas como proceso y actividad.
+- Las relaciones de rol y tarea, o proceso y producto, pueden tener dirección incoherente.
+- La deduplicación por coincidencia textual no resuelve equivalencias semánticas: se mantienen como propuestas, no fusiones automáticas.
+
+### Estado y siguientes tareas
+
+**v0.8.2a está implementada y evaluada con datos reales.** Falta la prueba visual en el navegador del usuario. La siguiente subetapa, v0.8.2b, deberá incorporar revisión y aceptación explícita de correcciones con registro de auditoría y, después, consolidación segura de duplicados, preservando todas sus evidencias y relaciones.
+
+Documentación oficial: [Supabase Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
+---
+
 # CIMAT v0.8.1 — Análisis integral por una sola operación
 
 ## Implementación

@@ -132,7 +132,7 @@
     select("v85-role-existing",state.catalog,"Selecciona un rol existente",r=>r.abreviatura+" · "+r.nombre);
     const hints=$("v85-role-hints");hints.replaceChildren();
     for(const r of state.catalog){const option=el("option");option.value=r.nombre;hints.append(option);}
-    const linked=state.roles.map(x=>({...x,rol:state.catalog.find(r=>r.id===x.rol_id)}))
+    const linked=state.roles.map(x=>({...x,id:x.rol_id,rol:state.catalog.find(r=>r.id===x.rol_id)}))
       .filter(x=>x.rol).sort((a,b)=>a.rol.nombre.localeCompare(b.rol.nombre,"es"));
     multi("v85-task-roles",linked,x=>x.rol.abreviatura+" · "+x.rol.nombre);
     const roleList=$("v85-role-list");roleList.replaceChildren();

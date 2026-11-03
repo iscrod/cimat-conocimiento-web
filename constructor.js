@@ -149,7 +149,7 @@
     multi("v85-task-inputs",state.products,p=>p.nombre);
     multi("v85-task-outputs",state.products,p=>p.nombre);
     multi("v85-task-updates",state.products,p=>p.nombre);
-    renderProcesses();renderTaskTable();renderSequences();refreshFeatures();renderDiagram();
+    renderProcesses();renderTaskTable();renderSequences();renderProductSuggestions();refreshFeatures();renderDiagram();
   }
   function renderProcesses(){
     const root=$("v85-process-list");root.replaceChildren();
@@ -205,6 +205,42 @@
         catch(err){message(err.message,true);}
       });row.append(btn);
     }
+  }
+  function renderProductSuggestions(){
+    const root=$("v85-product-suggestions");
+    if(!root)return;
+    root.replaceChildren();
+    const outputs=state.taskProducts.filter(x=>x.flujo==="salida"||x.flujo==="actualiza");
+    const inputs=state.taskProducts.filter(x=>x.flujo==="entrada");
+    const confirmed=new Set(state.sequences.map(x=>x.anterior_id+"|"+x.siguiente_id));
+    const examined=new Set();
+    let total=0,shown=0;
+    for(const out of outputs){
+      for(const input of inputs){
+        if(out.producto_id!==input.producto_id||out.tarea_id===input.tarea_id)continue;
+        const pair=out.tarea_id+"|"+input.tarea_id;
+        if(examined.has(pair)||confirmed.has(pair))continue;
+        examined.add(pair);total++;
+        if(shown>=25)continue;
+        const product=labelProduct(out.producto_id);
+        const a=nameOf(out.tarea_id,state.tasks),b=nameOf(input.tarea_id,state.tasks);
+        const card=itemCard(root,a+" → "+b,"Coincidencia de producto: "+product+". Es una hipótesis; no demuestra que exista precedencia obligatoria.");
+        const button=el("button","Revisar posible dependencia","outline");
+        button.type="button";
+        button.addEventListener("click",()=>{
+          $("v85-seq-level").value="tarea";
+          renderSequences();
+          $("v85-seq-from").value=out.tarea_id;
+          $("v85-seq-to").value=input.tarea_id;
+          $("v85-seq-note").value="";
+          $("v85-seq-form").scrollIntoView({behavior:"smooth",block:"center"});
+          message("Sugerencia preparada. Comprueba en la norma si existe una precedencia real antes de presionar «Registrar precedencia».");
+        });
+        card.append(button);shown++;
+      }
+    }
+    if(total===0)root.append(el("p","No se encontraron nuevas coincidencias entre productos de salida y entrada."));
+    if(total>shown)root.append(el("small","Se muestran "+shown+" de "+total+" coincidencias; usa las precedencias manuales para las demás."));
   }
   function refreshFeatures(){
     const product=$("v85-feature-product").value;

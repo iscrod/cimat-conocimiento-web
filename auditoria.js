@@ -6,7 +6,7 @@
   const apiRoot=String(window.CIMAT_CONFIG?.SUPABASE_URL||"").replace(/\/+$/,"");
   const publicKey=String(window.CIMAT_CONFIG?.SUPABASE_PUBLISHABLE_KEY||"");
   const sessionKey="cimat_v012_sesion";
-  let result=null,source=[],currentDomain="",visibleLimit=35,running=false;
+  let result=null,source=[],aliases=[],currentDomain="",visibleLimit=35,running=false;
   function el(tag,content,css) {
     const node=document.createElement(tag);
     if(content!==undefined&&content!==null)node.textContent=String(content);
@@ -53,7 +53,8 @@
     return data[0];
   }
   function sourceText(issue) {
-    const refs=source.filter(p=>p.elemento_id===issue.elementId);
+    const ids=new Set([issue.elementId,...aliases.filter(f=>f.canonico_id===issue.elementId).map(f=>f.fuente_id)]);
+    const refs=source.filter(p=>ids.has(p.elemento_id));
     const first=refs.find(p=>p.cita&&p.pagina===issue.page)||refs.find(p=>p.cita);
     if(first)return "PDF pág. "+first.pagina+" · Cita registrada: “"+
       first.cita.slice(0,220)+(first.cita.length>220?"…":"")+"”";
@@ -142,20 +143,20 @@
       if(domain!==$("modelo-dominio").value)throw new Error("Cambió el dominio durante la consulta. Vuelve a ejecutar.");
       const domainName=(domainMeta.codigo||"")+" "+(domainMeta.titulo||"");
       result=window.CIMAT_AUDITORIA_CORE.audit({elements,relations,evidence,fusiones,domainLabel:domainName});
-      source=evidence;currentDomain=domain;visibleLimit=35;
+      source=evidence;aliases=fusiones;currentDomain=domain;visibleLimit=35;
       $("auditoria-exportar").disabled=false;
       report("Auditoría de solo lectura completada: "+result.summary.total+
         " avisos por revisar. Reglas aplicadas: "+result.summary.scope+
         ". Ninguna ficha fue modificada.");
       render();
     }catch(err){
-      result=null;source=[];$("auditoria-exportar").disabled=true;
+      result=null;source=[];aliases=[];$("auditoria-exportar").disabled=true;
       $("auditoria-lista").replaceChildren();$("auditoria-resumen").replaceChildren();
       report("No se pudo ejecutar la auditoría: "+err.message,true);
     }finally{running=false;$("auditoria-ejecutar").disabled=false;}
   }
   function reset(){
-    result=null;source=[];currentDomain="";visibleLimit=35;
+    result=null;source=[];aliases=[];currentDomain="";visibleLimit=35;
     $("auditoria-resumen").replaceChildren();$("auditoria-lista").replaceChildren();
     $("auditoria-contador").textContent="";
     $("auditoria-exportar").disabled=true;

@@ -387,6 +387,20 @@
               <button id="ia-actualizar" type="button" class="outline">Consultar ejecuciones</button>
             </div>
           </form>
+          <section class="card muted" aria-labelledby="ia-total-titulo">
+            <h3 id="ia-total-titulo">Análisis integral del documento · v0.8.1</h3>
+            <p>Un solo comando revisa las páginas con texto, por tramos consecutivos de una o dos páginas. Compara cada propuesta con el catálogo existente y guarda referencias adicionales sin duplicar la ficha cuando coincide el nombre o código canónico.</p>
+            <p class="subtle">Este procedimiento puede requerir múltiples solicitudes a Gemini, sujetas a límites y posibles cargos de tu cuenta. Debes conservar abierta la pestaña; si se interrumpe, podrás reanudar las páginas pendientes. Ningún elemento queda aprobado automáticamente.</p>
+            <label class="checkline">
+              <input type="checkbox" id="ia-total-consentimiento">
+              Autorizo expresamente enviar <strong>todas las páginas con texto de este documento</strong> a Gemini para su análisis externo. Confirmo que tengo permiso para esa transferencia.
+            </label>
+            <div class="form-actions">
+              <button type="button" id="ia-total-iniciar">Analizar todo el documento</button>
+              <button type="button" id="ia-total-detener" class="outline hidden">Detener después del tramo actual</button>
+            </div>
+            <p id="ia-total-estado" class="form-status" role="status" aria-live="polite">El análisis integral no se ha iniciado.</p>
+          </section>
           <p id="ia-resultado" class="form-status" role="status" aria-live="polite"></p>
           <h3>Historial de propuestas</h3>
           <div id="ia-historial" aria-live="polite">Sin consultas todavía.</div>
@@ -528,6 +542,6 @@
 <script src="app.js?v=0.8.0" defer></script>
 <script src="analisis.js?v=0.8.0" defer></script>
 <script src="modelo.js?v=0.8.0" defer></script>
-<script src="ia.js?v=0.8.1" defer></script>
+<script src="ia.js?v=0.8.1-full" defer></script>
 </body>
 </html>

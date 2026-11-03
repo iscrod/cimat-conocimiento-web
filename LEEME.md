@@ -12,6 +12,10 @@
 4. **Tareas y relaciones:** tarea asociada a proceso y actividad opcional, rol(es), producto(s) de entrada, salida o actualizados, orden visual y precedencias explícitas. Los productos se registran una vez por dominio y se reutilizan. El orden visual nunca implica una dependencia obligatoria.
 5. **Características de productos:** opcionales, múltiples por producto, con texto, orden y referencia documental propia.
 
+### Sugerencias por productos compartidos
+
+La pantalla de **Tabla relacional** detecta coincidencias entre un producto de salida/actualización de una tarea y un producto de entrada de otra tarea. Presenta hasta 25 sugerencias de revisión por dominio. Al pulsar **Revisar posible dependencia** únicamente prepara el formulario de precedencia: **no guarda ni presupone una relación obligatoria**. El administrador debe cotejar la fuente y presionar **Registrar precedencia** si está justificada. Las precedencias declaradas se almacenan separadas del orden visual.
+
 La vista **Diagrama generado** utiliza exclusivamente registros de captura manual. Representa jerarquía, roles, productos, precedencias declaradas y casos en los que un producto aparece como salida de una tarea y entrada de otra. Ese último vínculo **no equivale a una precedencia obligatoria**.
 
 ## Compatibilidad y conservación de datos

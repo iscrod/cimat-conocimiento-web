@@ -177,6 +177,9 @@
     document.body.append(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1200);
   }
+  $("auditoria-ir-diagrama").addEventListener("click",()=>{
+    $("modelo-diagrama-raiz")?.scrollIntoView({behavior:"smooth",block:"start"});
+  });
   $("auditoria-ejecutar").addEventListener("click",run);
   $("auditoria-exportar").addEventListener("click",csv);
   $("auditoria-prioridad").addEventListener("change",()=>{visibleLimit=35;render();});

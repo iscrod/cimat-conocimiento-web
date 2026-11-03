@@ -1,3 +1,34 @@
+# CIMAT v0.8.2b — Revisión y consolidación controlada
+
+## Funciones disponibles
+
+Desde **Modelo y diagramas → Revisión y consolidación · v0.8.2b**:
+
+- Seleccionar elementos o relaciones, leer la ficha, sus páginas y citas.
+- **Corregir categoría** de un elemento propuesto, sujeto a restricciones del esquema.
+- **Aprobar, descartar o devolver a propuesto**, con confirmación y justificación humana. La aprobación no representa certificación ISO.
+- **Consolidar fichas equivalentes sin destruir datos**: `conocimiento_fusiones` guarda el enlace entre ficha fuente y canónica. El diagrama muestra la representación canónica sin borrar la ficha, las evidencias ni los vínculos originales. Puede deshacerse.
+- Consultar la bitácora `conocimiento_revisiones` con autor, fecha, justificación y estados antes/después.
+- Desde una incidencia de **Auditoría v0.8.2a** abrir la ficha correspondiente en la revisión.
+
+## Precauciones
+
+- Las consolidaciones son **visuales y reversibles**; no reescriben las evidencias ni los vínculos originales. Por tanto, los informes deben mostrar explícitamente cuándo una relación procede de una ficha consolidada y evitar interpretarla como evidencia nueva.
+- El servidor aplica restricciones de dominio, tipo, estado y duplicación, con autorización de administrador global. RLS limita la consulta y escritura de tablas relacionadas.
+- La decisión se registra solo al confirmar el usuario. La IA nunca aprueba ni consolida automáticamente.
+- Antes de aprobar, el experto debe cotejar citas y significado contra el documento. Una cita presente no demuestra la corrección de una relación.
+- La auditoría anterior debe **volver a ejecutarse** después de cada conjunto de correcciones para evaluar el nuevo estado.
+- Se conservan los resultados originales del análisis de la norma peruana: **149 elementos, 106 relaciones, 254 evidencias**, sin decisiones aplicadas al inicio de esta etapa.
+- La ejecución del frontend ha sido comprobada por sintaxis y las políticas por consultas, pero **no se ha realizado una prueba de extremo a extremo mediante la sesión del administrador**.
+
+## Referencias técnicas oficiales
+
+- [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security)
+- [Supabase PostgreSQL Functions](https://supabase.com/docs/guides/database/functions)
+- [PostgreSQL Constraints](https://www.postgresql.org/docs/current/ddl-constraints.html)
+
+---
+
 # CIMAT — v0.8.2a: auditoría del conocimiento (solo lectura)
 
 ## Propósito

@@ -10,6 +10,7 @@ function txt(s:unknown,max=300){return typeof s==="string"?s.replace(/\s+/g," ")
 function norm(s:unknown){return txt(s,100000).toLocaleLowerCase("es");}
 function num(s:unknown){return typeof s==="number"&&Number.isInteger(s)?s:NaN;}
 Deno.serve(async(req:Request)=>{
+  try {
   if(req.headers.get("origin")&&req.headers.get("origin")!==origin)return reply(403,"Origen no permitido");
   if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors});
   if(req.method!=="POST")return reply(405,"Método no permitido");
@@ -47,7 +48,7 @@ Deno.serve(async(req:Request)=>{
     return reply(413,"El texto supera 18 000 caracteres: analiza una sola página");
   const {data:run,error:runErr}=await service.from("ia_extracciones").insert({
     dominio_id:doc.dominio_id,documento_id:docId,pagina_inicio:ini,pagina_fin:fin,
-    proveedor:"gemini",modelo,estado:"iniciado",creado_por:verified.user.id
+    proveedor:"gemini",modelo:model,estado:"iniciado",creado_por:verified.user.id
   }).select("id").single();
   if(runErr||!run)return reply(500,"No se pudo registrar la ejecución");
   let nElements=0,nLinks=0,rejected=0;
@@ -138,14 +139,17 @@ Deno.serve(async(req:Request)=>{
     await service.from("auditoria").insert({actor_id:verified.user.id,
       accion:"PROPONER_CONOCIMIENTO_IA",entidad:"documentos_dominio",entidad_id:docId,
       detalles:{ejecucion_id:run.id,elementos:nElements,relaciones:nLinks,descartados:rejected,
-        pagina_inicio:ini,pagina_fin:fin,modelo}});
+        pagina_inicio:ini,pagina_fin:fin,modelo:model}});
     return reply(200,"Análisis terminado. Las propuestas requieren revisión humana.",{
       ejecucion_id:run.id,elementos_nuevos:nElements,relaciones_nuevas:nLinks,
-      descartes_sin_evidencia:rejected,modelo});
+      descartes_sin_evidencia:rejected,modelo:model});
   }catch(err){
     console.error("Error de análisis IA",err instanceof Error?err.name:"error");
     await finish(nElements+nLinks?"parcial":"fallido");
     return reply(500,nElements+nLinks?"Análisis interrumpido: quedaron propuestas parciales sin aprobar.":"No fue posible completar el análisis.",{
       elementos_nuevos:nElements,relaciones_nuevas:nLinks,ejecucion_id:run.id});
+  }  } catch (error) {
+    console.error("Error general del analizador", error instanceof Error ? error.name + ": " + error.message : "desconocido");
+    return reply(500,"Error interno del analizador; consulta los registros de la función en Supabase.");
   }
 });

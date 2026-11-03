@@ -62,8 +62,9 @@
     const ids = new Set([item.id, ...model.fusiones.filter(f => f.canonico_id === item.id).map(f => f.fuente_id)]);
     const more = model.evidence.filter(e => ids.has(e.elemento_id));
     const pages = [...new Set([item.pagina,...more.map(e => e.pagina)].filter(Boolean))].sort((a,b)=>a-b);
-    return pages.length ? "PDF pág. " + pages.join(", ") +
-      (doc?" · "+doc.nombre_original:"") : "Sin referencia de página";
+    const docIds = new Set([item.documento_id,...more.map(e => e.documento_id)].filter(Boolean));
+    const origin = docIds.size>1 ? " · varias fuentes documentales" : (doc?" · "+doc.nombre_original:"");
+    return pages.length ? "PDF pág. " + pages.join(", ") + origin : "Sin referencia de página";
   }
   function displayNode(node) {
     return (node.codigo ? node.codigo + " · " : "") + node.titulo + " [" + (kinds[node.tipo] || node.tipo) + "]";

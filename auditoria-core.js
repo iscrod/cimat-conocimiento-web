@@ -131,6 +131,10 @@
     for(const arr of groups.values()) {
       if(arr.length<2 || !titleKey(arr[0].titulo) || titleKey(arr[0].titulo).length<5)continue;
       const first=arr[0],second=arr[1];
+      // La misma denominación de tarea puede repetirse legítimamente en
+      // diferentes actividades: no proponer su fusión por nombre solamente.
+      const distinctCodes=new Set(arr.map(n=>String(n.codigo||"").toUpperCase()).filter(Boolean));
+      if(["tarea","actividad"].includes(first.tipo)&&distinctCodes.size>1)continue;
       add("duplicados","media",first.titulo+" · "+arr.length+" fichas similares",
         arr.map(n=>(n.codigo||"s/c")+" · "+n.titulo+" (PDF pág. "+(n.pagina||"?")+")").join(" | "),
         "Comparar contenido, función, estados y fuentes. Unificar solo si representan la misma entidad.",first.id,null,first.pagina,second.id);

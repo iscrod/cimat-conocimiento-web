@@ -131,7 +131,7 @@
     select("v85-doc",state.documents,"Sin documento asociado",d=>d.nombre_original);
     select("v85-role-existing",state.catalog,"Selecciona un rol existente",r=>r.abreviatura+" · "+r.nombre);
     const hints=$("v85-role-hints");hints.replaceChildren();
-    for(const r of state.catalog)hints.append(el("option",null)).lastChild.value=r.nombre;
+    for(const r of state.catalog){const option=el("option");option.value=r.nombre;hints.append(option);}
     const linked=state.roles.map(x=>({...x,rol:state.catalog.find(r=>r.id===x.rol_id)}))
       .filter(x=>x.rol).sort((a,b)=>a.rol.nombre.localeCompare(b.rol.nombre,"es"));
     multi("v85-task-roles",linked,x=>x.rol.abreviatura+" · "+x.rol.nombre);
@@ -296,11 +296,12 @@
   $("v85-role-new").addEventListener("submit",e=>save(e,async()=>{
     const nombre=$("v85-role-name").value.trim(),abreviatura=$("v85-role-code").value.trim();
     const funcion=$("v85-role-function").value.trim();
+    const captureSource=source();
     if(state.catalog.some(x=>x.nombre.trim().toLowerCase()===nombre.toLowerCase()))
       throw Error("Ese rol ya existe; selecciona Reutilizar un rol existente.");
     const r=await api("/rest/v1/"+R.rol,"POST",{nombre,abreviatura,funcion});
     if(!r?.[0]?.id)throw Error("No se obtuvo ID del nuevo rol.");
-    await api("/rest/v1/"+R.vinculo,"POST",{dominio_id:state.domain,rol_id:r[0].id,...source()});
+    await api("/rest/v1/"+R.vinculo,"POST",{dominio_id:state.domain,rol_id:r[0].id,...captureSource});
     $("v85-role-new").reset();
     return "Rol creado y vinculado al dominio.";
   }));

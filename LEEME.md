@@ -1,6 +1,8 @@
-# CIMAT v0.8.52 — Constructor manual de metodologías
+# CIMAT v0.8.5 — Constructor manual de metodologías
 
-**Estado:** Implementado en GitHub y Supabase, pendiente de prueba funcional con la sesión del administrador y revisión visual en navegador.
+**Estado:** Implementado en GitHub y Supabase. Verificadas estructura, sintaxis JavaScript, integridad de llaves foráneas, protección RLS y rechazo de escritura sin sesión administrativa. Pendiente de prueba funcional de captura con la sesión del administrador y revisión visual en navegador.
+
+**Corrección funcional:** la selección de roles de una tarea usa el identificador UUID del catálogo compartido (`rol_id`), no la clave de la asociación por dominio. Evita guardar vínculos con IDs inexistentes.
 
 ## Arquitectura de cinco apartados
 

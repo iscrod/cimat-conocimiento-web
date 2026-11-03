@@ -509,7 +509,16 @@
     $("v85-feature-name").value=x.nombre;$("v85-feature-desc").value=x.descripcion||"";
     setSource(x);
   });
-  $("v85-domain").addEventListener("change",()=>{$("v85-doc").value="";$("v85-page").value="";$("v85-code-status").textContent="";load();});
+  $("v85-domain").addEventListener("change",()=>{
+    $("v85-doc").value="";$("v85-page").value="";
+    $("v85-code-status").textContent="";
+    inlineResult("v85-product-form","");
+    inlineResult("v85-task-form","");
+    state.config=null;
+    for(const id of ["v85-task-roles","v85-task-inputs","v85-task-outputs","v85-task-updates"])
+      for(const checkbox of $(id).querySelectorAll('input[type="checkbox"]'))checkbox.checked=false;
+    load();
+  });
   $("v85-code-save").addEventListener("click",async()=>{
     const choice=$("v85-activities-have-code").value,domain=$("v85-domain").value;
     const status=$("v85-code-status");status.textContent="";

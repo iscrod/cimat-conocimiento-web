@@ -56,13 +56,18 @@
   async function loadDocuments(){
     try{
       const rows=await api("/rest/v1/documentos_dominio?select=id,dominio_id,nombre_original&order=cargado_en.desc&limit=200");
-      documents=rows;
+      const domain=$("modelo-dominio")?.value||"";
+      documents=domain?rows.filter(d=>d.dominio_id===domain):[];
       const target=$("ia-documento"),old=target.value;
-      target.replaceChildren(new Option("Selecciona un PDF procesado",""));
-      rows.forEach(d=>target.add(new Option(d.nombre_original,d.id)));
-      if(rows.some(d=>d.id===old))target.value=old;
-      else if(rows.length===1)target.value=rows[0].id;
-      await pageLimits();
+      target.replaceChildren(new Option(domain?"Selecciona el PDF del dominio":"Primero selecciona el dominio",""));
+      documents.forEach(d=>target.add(new Option(d.nombre_original,d.id)));
+      if(documents.some(d=>d.id===old))target.value=old;
+      else if(documents.length===1)target.value=documents[0].id;
+      if(!documents.length)status("ia-resultado",domain
+        ?"El dominio elegido no tiene documentos registrados. Cárgalo desde Biblioteca."
+        :"Selecciona primero un dominio documental arriba.",false);
+      else await pageLimits();
+      await history();
     }catch(err){status("ia-resultado","No se pudieron consultar los documentos: "+err.message,true);}
   }
   async function pageLimits(){
@@ -80,9 +85,12 @@
     }catch(err){status("ia-resultado","No se pudo consultar el análisis: "+err.message,true);}
   }
   async function history(){
+    const target=$("ia-historial");
+    const id=$("ia-documento").value;
+    if(!id){target.replaceChildren(elem("p","Selecciona un documento de este dominio para ver su historial."));return;}
     try{
-      const rows=await api("/rest/v1/ia_extracciones?select=pagina_inicio,pagina_fin,estado,elementos_nuevos,relaciones_nuevas,descartes_sin_evidencia,modelo,creado_en&order=creado_en.desc&limit=12");
-      const target=$("ia-historial");target.replaceChildren();
+      const rows=await api("/rest/v1/ia_extracciones?select=pagina_inicio,pagina_fin,estado,elementos_nuevos,relaciones_nuevas,descartes_sin_evidencia,modelo,creado_en&order=creado_en.desc&limit=12&documento_id=eq."+encodeURIComponent(id));
+      target.replaceChildren();
       if(!rows.length){target.append(elem("p","No hay ejecuciones registradas."));return;}
       rows.forEach(r=>{
         const div=elem("div","","item");
@@ -98,12 +106,13 @@
   async function init(){
     if(busy)return;
     busy=true;
-    try{await Promise.all([config(),loadDocuments(),history()]);}
+    try{await Promise.all([config(),loadDocuments()]);}
     finally{busy=false;}
   }
   $("ia-estado-boton").addEventListener("click",config);
   $("ia-actualizar").addEventListener("click",history);
-  $("ia-documento").addEventListener("change",pageLimits);
+  $("ia-documento").addEventListener("change",async()=>{await pageLimits();await history();});
+  $("modelo-dominio").addEventListener("change",loadDocuments);
   $("ia-pagina-inicio").addEventListener("change",function(){
     const p=Number(this.value),to=$("ia-pagina-fin");
     if(Number(to.value)<p||Number(to.value)>p+1)to.value=this.value;

@@ -1,4 +1,51 @@
-# CIMAT v0.8.2a — Auditoría automática de conocimiento (solo lectura)
+# CIMAT — v0.8.2a: auditoría del conocimiento (solo lectura)
+
+## Propósito
+
+Esta versión añade **Modelo y diagramas → Auditoría del conocimiento**. Examina el catálogo del dominio seleccionado y señala incidencias antes de aprobar las propuestas de la extracción inteligente. La auditoría **no modifica la base de datos** y **no envía texto a Gemini**; utiliza consultas REST autenticadas sometidas a las políticas RLS existentes de Supabase.
+
+### Comprobaciones
+
+- **Jerarquía:** patrones de códigos para proceso, actividad y tarea del perfil básico ISO/IEC 29110, incluidos conflictos de categoría. Estas reglas solo se habilitan para un dominio cuyo código contiene 29110.
+- **Cobertura:** actividades GP.1–GP.4, IS.1–IS.6, actividades sin ficha correcta y saltos en la numeración de tareas. Son **ausencias en el modelo**, no una declaración de incumplimiento de la norma.
+- **Duplicados potenciales:** nombres normalizados de la misma categoría. No confunde tareas homónimas con códigos diferentes.
+- **Relaciones:** dirección y combinación de tipos sospechosas (p. ej., tarea participa en rol en vez de rol participa en tarea).
+- **Trazabilidad:** elementos sin referencia de documento/página o cita registrada; relaciones sin cita o metadatos suficientes.
+- **Elementos aislados:** fichas no vinculadas al modelo.
+
+Los avisos se ordenan por prioridad alta/media/baja y pueden filtrarse y exportarse a CSV. «Revisar ficha» lleva al editor ya existente. La exportación se genera localmente en el navegador; **no añade permisos de lectura pública**.
+
+### Uso en el proyecto
+
+1. Abrir la versión publicada en https://iscrod.github.io/cimat-conocimiento-web/ e iniciar sesión como administrador global.
+2. Ir a **Modelo y diagramas**, elegir el dominio **NTP-RT-ISO/IEC TR 29110-5-1-2:2012**.
+3. Pulsar **Auditar dominio seleccionado** y consultar el resumen e incidencias.
+4. Filtrar por alta prioridad y revisar en el PDF las fichas indicadas; no asumir que una alerta equivale a error normativo demostrado.
+5. Si se corrige manualmente una ficha, pulsar **Auditar dominio seleccionado** otra vez para recalcular; no se guardan estados de auditoría permanentes.
+6. Utilizar **Ir al diagrama** para ver el modelo provisional y **Exportar diagnóstico CSV** para documentar los hallazgos en la tesis.
+
+### Estado y límites
+
+Para el dominio peruano se recibieron de la versión 0.8.1 **149 elementos, 106 relaciones y 254 evidencias**. Ninguna propuesta fue aprobada por esta versión. La auditoría encuentra hipótesis de corrección, no reinterpreta automáticamente citas; algunas relaciones pueden ser legítimas pese a una advertencia.
+
+La **v0.8.2b** deberá implementar revisión experta transaccional, reconciliación de fichas con conservación de las evidencias y control de cambios. La **v0.8.2c** completará la validación jerárquica y la generación de diagramas depurados por estado de revisión.
+
+### Pruebas reproducibles
+
+```bash
+node --test tests/auditoria.test.cjs
+```
+
+Estas pruebas usan el motor puro `auditoria-core.js` y no requieren acceso a Supabase ni a Gemini.
+
+### Referencias
+
+- [Supabase — Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security).
+- [Supabase — API REST](https://supabase.com/docs/guides/api).
+- Fuente del dominio: PDF peruano NTP-RT-ISO/IEC TR 29110-5-1-2:2012, registrado en la biblioteca privada. Las afirmaciones específicas sobre componentes, roles y tareas deben verificarse en la edición cargada antes de su aprobación.
+
+---
+
 
 ## Resultado de prueba en Supabase (3 de noviembre de 2026)
 

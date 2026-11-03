@@ -6,7 +6,7 @@
   const root = String(cfg.SUPABASE_URL || "").replace(/\/+$/, "");
   const key = String(cfg.SUPABASE_PUBLISHABLE_KEY || "");
   const sessionKey = "cimat_v012_sesion";
-  const model = { domains: [], documents: [], elements: [], relations: [], ready: false };
+  const model = { domains: [], documents: [], elements: [], relations: [], evidence: [], ready: false };
   const kinds = { proceso: "Proceso", actividad: "Actividad", tarea: "Tarea", rol: "Rol", producto: "Producto de trabajo", componente: "Componente", concepto: "Concepto" };
   const relations = { contiene: "contiene", participa: "participa en", ejecuta: "ejecuta", utiliza: "utiliza (entrada)", genera: "genera (salida)", actualiza: "actualiza", verifica: "verifica", precede: "precede a", referencia: "referencia" };
 
@@ -59,7 +59,10 @@
   }
   function sourceLabel(item) {
     const doc = model.documents.find(d => d.id === item.documento_id);
-    return doc && item.pagina ? "PDF pág. " + item.pagina + " · " + doc.nombre_original : "Sin referencia de página";
+    const more = model.evidence.filter(e => e.elemento_id === item.id);
+    const pages = [...new Set([item.pagina,...more.map(e => e.pagina)].filter(Boolean))].sort((a,b)=>a-b);
+    return pages.length ? "PDF pág. " + pages.join(", ") +
+      (doc?" · "+doc.nombre_original:"") : "Sin referencia de página";
   }
   function displayNode(node) {
     return (node.codigo ? node.codigo + " · " : "") + node.titulo + " [" + (kinds[node.tipo] || node.tipo) + "]";
@@ -98,15 +101,17 @@
     const domain = selectedDomain();
     if (!domain) return;
     msg("modelo-estado", "Cargando conocimiento...");
-    const [documents, elements, edges] = await Promise.all([
+    const [documents, elements, edges, evidence] = await Promise.all([
       api("/rest/v1/documentos_dominio?select=id,dominio_id,nombre_original&dominio_id=eq." + encodeURIComponent(domain) + "&order=cargado_en.desc&limit=100"),
       api("/rest/v1/conocimiento_elementos?select=id,dominio_id,documento_id,pagina,tipo,codigo,titulo,descripcion,estado,origen,orden,revisado_en&dominio_id=eq." + encodeURIComponent(domain) + "&order=orden.asc&limit=500"),
-      api("/rest/v1/conocimiento_relaciones?select=id,dominio_id,origen_id,destino_id,tipo,detalle,documento_id,pagina,estado&dominio_id=eq." + encodeURIComponent(domain) + "&limit=1000")
+      api("/rest/v1/conocimiento_relaciones?select=id,dominio_id,origen_id,destino_id,tipo,detalle,documento_id,pagina,estado&dominio_id=eq." + encodeURIComponent(domain) + "&limit=1000"),
+      api("/rest/v1/conocimiento_evidencias?select=elemento_id,documento_id,pagina,cita&dominio_id=eq." + encodeURIComponent(domain) + "&limit=2000")
     ]);
     if (domain !== selectedDomain()) return;
     model.documents = documents;
     model.elements = elements;
     model.relations = edges;
+    model.evidence = evidence;
     const docDisplay = d => d.nombre_original;
     options("modelo-elemento-documento", documents, "Sin PDF asociado (solo propuesta)", docDisplay);
     options("modelo-relacion-documento", documents, "Sin PDF asociado (solo propuesta)", docDisplay);
@@ -177,6 +182,21 @@
   }
 
   function renderDirectory() {
+    const duplicateTarget=$("modelo-duplicados");
+    if(duplicateTarget){
+      duplicateTarget.replaceChildren();
+      const byName=new Map();
+      model.elements.filter(e=>e.tipo==="producto"&&e.estado!=="descartado").forEach(e=>{
+        const key=e.titulo.normalize("NFKC").trim().toLocaleLowerCase("es");
+        if(!byName.has(key))byName.set(key,[]);
+        byName.get(key).push(e);
+      });
+      const groups=[...byName.values()].filter(g=>g.length>1);
+      if(groups.length){
+        duplicateTarget.append(el("strong","Posibles productos duplicados pendientes de reconciliación:"));
+        groups.forEach(g=>duplicateTarget.append(el("p",g[0].titulo+" ("+g.length+" fichas: "+g.map(x=>x.codigo||"sin código").join(", ")+"). No apruebes ambas sin revisar sus relaciones.")));
+      }else duplicateTarget.append(el("p","No se detectaron productos con nombres idénticos dentro del dominio."));
+    }
     const elemTarget = $("modelo-elementos-lista");
     elemTarget.replaceChildren();
     if (!model.elements.length) elemTarget.append(el("p", "Todavía no existen elementos para este dominio."));
@@ -184,6 +204,16 @@
       const row = el("div", null, "modelo-directorio-fila");
       const desc = el("div", null, "modelo-directorio-descripcion");
       desc.append(el("strong", displayNode(n)), el("small", n.estado + " · " + sourceLabel(n)));
+      const references=model.evidence.filter(e=>e.elemento_id===n.id);
+      if(references.length){
+        const details=el("details");
+        details.append(el("summary","Ver "+references.length+" cita(s) documentales"));
+        references.forEach(e=>{
+          const doc=model.documents.find(d=>d.id===e.documento_id);
+          details.append(el("p","Página "+e.pagina+(doc?" · "+doc.nombre_original:"")+" · "+e.cita));
+        });
+        desc.append(details);
+      }
       const action=el("button","Editar","outline");
       action.type="button";
       action.addEventListener("click",()=>editElement(n.id));

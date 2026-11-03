@@ -15,14 +15,20 @@
   function titleKey(text) {
     return normalize(text).split(" ").filter(x=>x && !new Set(["de","del","la","el","los","las","un","una","al"]).has(x)).join(" ");
   }
-  function audit({elements=[],relations=[],evidence=[],domainLabel=""}) {
-    const nodes=elements.filter(n=>n.estado!=="descartado");
-    const edges=relations.filter(e=>e.estado!=="descartado");
+  function audit({elements=[],relations=[],evidence=[],fusiones=[],domainLabel=""}) {
+    // Las consolidaciones son alias reversibles, nunca eliminan citas ni enlaces.
+    const alias=new Map(fusiones.map(f=>[f.fuente_id,f.canonico_id]));
+    const nodes=elements.filter(n=>n.estado!=="descartado"&&!alias.has(n.id));
+    const edges=relations.filter(e=>e.estado!=="descartado").map(r=>({
+      ...r,origen_id:alias.get(r.origen_id)||r.origen_id,
+      destino_id:alias.get(r.destino_id)||r.destino_id
+    })).filter(r=>r.origen_id!==r.destino_id);
     const byId=new Map(nodes.map(n=>[n.id,n]));
     const proof=new Map();
     for(const e of evidence) {
-      if(!proof.has(e.elemento_id))proof.set(e.elemento_id,[]);
-      proof.get(e.elemento_id).push(e);
+      const owner=alias.get(e.elemento_id)||e.elemento_id;
+      if(!proof.has(owner))proof.set(owner,[]);
+      proof.get(owner).push(e);
     }
     const iso29110=/29110/.test(domainLabel);
     const issues=[],keys=new Set();

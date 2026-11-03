@@ -72,6 +72,10 @@
     }
     select.value=value;
     select.dispatchEvent(new Event("change",{bubbles:true}));
+    // La nueva revisión muestra la fuente y permite registrar una decisión auditada.
+    window.dispatchEvent(new CustomEvent("cimat:revisar",{detail:{
+      elementId:issue.elementId||null,relationId:issue.relationId||null
+    }}));
   }
   function render() {
     const list=$("auditoria-lista"),summary=$("auditoria-resumen");
@@ -127,16 +131,17 @@
     running=true;$("auditoria-ejecutar").disabled=true;
     report("Consultando elementos, relaciones y evidencias del dominio seleccionado...");
     try{
-      const [elements,relations,evidence,domainMeta]=await Promise.all([
+      const [elements,relations,evidence,fusiones,domainMeta]=await Promise.all([
         fetchRows("conocimiento_elementos","id,tipo,codigo,titulo,descripcion,estado,origen,documento_id,pagina",domain,1000),
         fetchRows("conocimiento_relaciones","id,origen_id,destino_id,tipo,detalle,documento_id,pagina,estado",domain,2000),
         fetchRows("conocimiento_evidencias","elemento_id,documento_id,pagina,cita",domain,4000),
+        fetchRows("conocimiento_fusiones","fuente_id,canonico_id",domain,1000),
         fetchDomain(domain)
       ]);
       // Una selección modificada durante la carga invalida el cálculo.
       if(domain!==$("modelo-dominio").value)throw new Error("Cambió el dominio durante la consulta. Vuelve a ejecutar.");
       const domainName=(domainMeta.codigo||"")+" "+(domainMeta.titulo||"");
-      result=window.CIMAT_AUDITORIA_CORE.audit({elements,relations,evidence,domainLabel:domainName});
+      result=window.CIMAT_AUDITORIA_CORE.audit({elements,relations,evidence,fusiones,domainLabel:domainName});
       source=evidence;currentDomain=domain;visibleLimit=35;
       $("auditoria-exportar").disabled=false;
       report("Auditoría de solo lectura completada: "+result.summary.total+

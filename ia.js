@@ -25,7 +25,13 @@
     });
     const raw=await response.text();let body={};
     try{body=raw?JSON.parse(raw):{};}catch{}
-    if(!response.ok)throw new Error(body.mensaje||body.message||"HTTP "+response.status);
+    if(!response.ok){
+      const error=new Error(body.mensaje||body.message||"HTTP "+response.status);
+      error.status=response.status;
+      error.reintentar=body.reintentar===true;
+      error.codigo=body.codigo||"";
+      throw error;
+    }
     return body;
   }
   function status(id,text,error=false){
@@ -213,16 +219,53 @@
           "Completados: "+completed+"; nuevos elementos: "+created+
           "; relaciones: "+edges+". Mantén abierta esta pestaña.");
         let result;
-        try{
-          result=await api("/functions/v1/cimat-analizar-dominio",{
-            method:"POST",
-            body:{accion:"analizar",documento_id:id,pagina_inicio:from,pagina_fin:to,
-              consentimiento_externo:true}
-          });
-        }catch(err){
+        for(let attempt=0;attempt<3;attempt++){
+          if(stopRequested){wasStopped=true;break;}
+          try{
+            result=await api("/functions/v1/cimat-analizar-dominio",{
+              method:"POST",
+              body:{accion:"analizar",documento_id:id,pagina_inicio:from,pagina_fin:to,
+                consentimiento_externo:true}
+            });
+            break;
+          }catch(err){
+            const temporary=(err.status===503&&err.reintentar===true)||
+              (err.status===502&&/proveedor de IA respondió HTTP 503/i.test(err.message||""));
+            if(!temporary||attempt===2){
+              failed=true;
+              status("ia-total-estado","Interrupción en las páginas "+from+"–"+to+": "+err.message+
+                ". Consulta el historial antes de reanudar; CIMAT omitirá los tramos ya completados.",true);
+              break;
+            }
+            // Una respuesta perdida podría corresponder a un análisis ya guardado.
+            // Nunca repetir si la ejecución previa aparece completa en Supabase.
+            try{
+              const check=await api("/functions/v1/cimat-analizar-dominio",{
+                method:"POST",body:{accion:"plan",documento_id:id}
+              });
+              const pending=new Set(check.paginas_pendientes||[]);
+              if(!pending.has(from)&&!pending.has(to)){
+                result={elementos_nuevos:0,relaciones_nuevas:0,descartes_sin_evidencia:0};
+                break;
+              }
+            }catch(checkError){
+              failed=true;
+              status("ia-total-estado","No se pudo confirmar si las páginas "+from+"–"+to+
+                " quedaron guardadas. Revisa el historial antes de repetir la solicitud.",true);
+              break;
+            }
+            const pause=(attempt+1)*15000;
+            status("ia-total-estado","Gemini está temporalmente saturado en las páginas "+
+              from+"–"+to+". Reintento "+(attempt+1)+" de 2 después de "+
+              (pause/1000)+" segundos. Los resultados anteriores están guardados.");
+            await new Promise(resolve=>setTimeout(resolve,pause));
+          }
+        }
+        if(failed||wasStopped)break;
+        if(!result){
           failed=true;
-          status("ia-total-estado","Interrupción en las páginas "+from+"–"+to+": "+err.message+
-            ". Consulta el historial antes de reanudar; CIMAT omitirá los tramos ya completados.",true);
+          status("ia-total-estado","No se obtuvo una respuesta verificable para las páginas "+
+            from+"–"+to+". Consulta el historial antes de reanudar.",true);
           break;
         }
         completed++;

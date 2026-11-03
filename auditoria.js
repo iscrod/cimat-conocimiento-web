@@ -54,7 +54,7 @@
   }
   function sourceText(issue) {
     const refs=source.filter(p=>p.elemento_id===issue.elementId);
-    const first=refs.find(p=>p.cita);
+    const first=refs.find(p=>p.cita&&p.pagina===issue.page)||refs.find(p=>p.cita);
     if(first)return "PDF pág. "+first.pagina+" · Cita registrada: “"+
       first.cita.slice(0,220)+(first.cita.length>220?"…":"")+"”";
     if(issue.page)return "PDF pág. "+issue.page+

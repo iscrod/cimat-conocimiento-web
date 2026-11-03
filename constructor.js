@@ -251,6 +251,11 @@
           if(names.length)prod.append(el("p",label+": "+names.join("; ")));
         }
         if(prod.childElementCount===1)prod.append(el("p","No especificados"));
+        const linked=new Set(["entrada","salida","actualiza"].flatMap(f=>linkedProducts(t.id,f)));
+        for(const prodId of linked){
+          const features=state.features.filter(f=>f.producto_id===prodId).sort((a,b)=>a.orden-b.orden);
+          if(features.length)prod.append(el("small","Componentes de "+labelProduct(prodId)+": "+features.map(f=>f.nombre).join("; ")));
+        }
         row.append(roles,task,prod);card.append(row);
       }
       if(!tasks.length)card.append(el("p","Actividad sin tareas capturadas."));
@@ -287,11 +292,14 @@
   async function save(event,fn){
     event.preventDefault();if(!state.domain){message("Selecciona un dominio.",true);return;}
     if(state.loading){message("Hay otra operación en curso.",true);return;}
+    state.loading=true;
     try{
       const result=await fn();
+      state.loading=false;
       await load();
       message(result||"Registro guardado correctamente.");
     }catch(e){message("No se pudo guardar: "+e.message,true);}
+    finally{state.loading=false;}
   }
   $("v85-role-new").addEventListener("submit",e=>save(e,async()=>{
     const nombre=$("v85-role-name").value.trim(),abreviatura=$("v85-role-code").value.trim();

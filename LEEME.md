@@ -1,3 +1,18 @@
+# CIMAT v0.8.5 — Mejoras de captura y presentación (3 de noviembre de 2026)
+
+Se implementaron ajustes de usabilidad al constructor manual, conservando todas las fichas existentes y las fuentes almacenadas en la Biblioteca:
+
+- **Apartados plegables:** los cinco apartados y el diagrama usan controles nativos de expandir/contraer. Solo el apartado 1 está abierto inicialmente.
+- **Códigos de actividades por dominio:** en el apartado 1 el administrador selecciona si las actividades usan códigos oficiales. La decisión se guarda en `cimat_0855_configuracion`, protegida mediante RLS y vinculada al dominio. Si no tienen código oficial, no se muestra el campo manual y CIMAT propone un identificador interno como `ACT-0001`. Las actividades previamente registradas conservan sus códigos. El código interno **no se atribuye a la norma**.
+- **Orden por registro:** procesos, actividades, tareas y características se visualizan según `creado_en`; ya no se solicita un número de «orden visual». Las relaciones de precedencia siguen siendo **explícitas y separadas** del orden de captura.
+- **Confirmación visible:** el formulario de productos y el de tareas tienen mensajes locales de éxito o error, además del mensaje general, que se presentan una vez finalizada la operación de guardado y recarga.
+- **Selección por casillas:** en una tarea los roles, las entradas, las salidas y los productos actualizados se eligen con casillas independientes; se permiten selecciones múltiples y ninguno cuando la fuente no lo indique.
+- **Sin procesamiento de documentos:** la Biblioteca sigue conservando las fuentes; las tablas se capturan manualmente en Modelo y diagramas.
+
+**Validación:** comprobados los enlaces de recursos, la sintaxis del JavaScript, los IDs de los controles y la tabla de configuración con políticas RLS. La prueba completa de captura y guardado con la sesión administrativa del usuario continúa pendiente.
+
+---
+
 # CIMAT v0.8.5 — Constructor manual de metodologías
 
 **Estado:** Implementado en GitHub y Supabase. Verificadas estructura, sintaxis JavaScript, integridad de llaves foráneas, protección RLS y rechazo de escritura sin sesión administrativa. Pendiente de prueba funcional de captura con la sesión del administrador y revisión visual en navegador.

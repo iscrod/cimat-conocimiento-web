@@ -152,3 +152,31 @@ END $function$
 
 REVOKE ALL ON FUNCTION public.cimat_082b_revisar(text,uuid,text,text,text,uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.cimat_082b_revisar(text,uuid,text,text,text,uuid) TO authenticated;
+
+-- Regla de integridad: no permitir fusiones distintas de la clase o dominio
+-- ni encadenamientos, incluso ante inserciones administrativas fuera de la interfaz.
+CREATE FUNCTION private.cimat_082b_validar_fusion()
+RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path TO ''
+AS $$
+DECLARE original public.conocimiento_elementos%ROWTYPE;
+        canon public.conocimiento_elementos%ROWTYPE;
+BEGIN
+ IF TG_OP='UPDATE' THEN RAISE EXCEPTION 'Las fusiones no se editan: deshaz y registra otra decisión'; END IF;
+ SELECT * INTO original FROM public.conocimiento_elementos
+ WHERE id=NEW.fuente_id AND dominio_id=NEW.dominio_id;
+ SELECT * INTO canon FROM public.conocimiento_elementos
+ WHERE id=NEW.canonico_id AND dominio_id=NEW.dominio_id;
+ IF original.id IS NULL OR canon.id IS NULL OR original.tipo<>canon.tipo
+    OR original.estado<>'propuesto' OR canon.estado<>'propuesto' THEN
+   RAISE EXCEPTION 'Solo se consolidan elementos propuestos, del mismo dominio y categoría';
+ END IF;
+ IF EXISTS(SELECT 1 FROM public.conocimiento_fusiones f
+    WHERE f.fuente_id=NEW.canonico_id OR f.canonico_id=NEW.fuente_id) THEN
+   RAISE EXCEPTION 'No se permiten fusiones encadenadas o ciclos';
+ END IF;
+ NEW.creado_por:=auth.uid();
+ RETURN NEW;
+END $$;
+CREATE TRIGGER conocimiento_validar_fusion
+ BEFORE INSERT OR UPDATE ON public.conocimiento_fusiones
+ FOR EACH ROW EXECUTE FUNCTION private.cimat_082b_validar_fusion();

@@ -114,10 +114,14 @@ Deno.serve(async(req:Request)=>{
     } finally{clearTimeout(timer);}
     if(!response.ok){
       await finish("fallido");
-      if(response.status===429)return reply(429,"Límite de solicitudes de IA alcanzado");
-      if([401,403].includes(response.status))return reply(503,"Clave de IA rechazada");
-      if(response.status===404)return reply(503,"El modelo no está disponible; ajusta CIMAT_GEMINI_MODEL");
-      return reply(502,"El proveedor de IA respondió HTTP "+response.status);
+      if(response.status===429)return reply(429,"Límite de solicitudes de Gemini alcanzado. Revisa tu cuota antes de reanudar.",{reintentar:false,codigo:"gemini_cuota"});
+      if([401,403].includes(response.status))return reply(503,"Clave de IA rechazada",{reintentar:false,codigo:"gemini_clave"});
+      if(response.status===404)return reply(503,"El modelo no está disponible; ajusta CIMAT_GEMINI_MODEL",{reintentar:false,codigo:"gemini_modelo"});
+      if([500,502,503,504].includes(response.status)){
+        console.warn("Fallo transitorio del proveedor Gemini: HTTP",response.status,"en páginas",ini,fin);
+        return reply(503,"Gemini está temporalmente saturado (HTTP "+response.status+"). Los tramos completos se conservan.",{reintentar:true,codigo:"gemini_temporal"});
+      }
+      return reply(502,"El proveedor de IA respondió HTTP "+response.status,{reintentar:false,codigo:"gemini_error"});
     }
     const raw=await response.json();
     const answer=(raw?.candidates?.[0]?.content?.parts||[]).map((p:{text?:string})=>p.text||"").join("");

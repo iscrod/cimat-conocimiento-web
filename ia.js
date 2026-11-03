@@ -132,7 +132,10 @@
       // El catálogo gráfico utiliza los registros aprobados y propuestos desde PostgreSQL.
       $("modelo-recargar")?.click();
     }catch(err){
-      status("ia-resultado","No se completó el análisis: "+err.message,true);
+      const disconnected=err instanceof TypeError || /NetworkError|Failed to fetch|fetch resource|Load failed/i.test(err.message||"");
+      status("ia-resultado",disconnected
+        ? "Se interrumpió la comunicación con el servidor y no se pudo confirmar el resultado. Presiona «Consultar ejecuciones» antes de reintentar, para evitar análisis duplicados. Si no aparece una nueva ejecución, comprueba la conexión de red o intenta desde otra red."
+        : "No se completó el análisis: "+err.message,true);
       await history();
     }finally{button.disabled=false;}
   });

@@ -208,7 +208,7 @@
     if(!state.tasks.length){root.append(el("p","Todavía no se han capturado tareas."));return;}
     const table=el("table",null,"v85-table");
     const head=el("thead"),hr=el("tr");
-    ["Proceso / actividad","Orden y tarea","Roles","Entradas","Salidas","Actualiza","Predecesoras"].forEach(s=>hr.append(el("th",s)));
+    ["Proceso / actividad","Tarea (orden de registro)","Roles","Entradas","Salidas","Actualiza","Predecesoras"].forEach(s=>hr.append(el("th",s)));
     head.append(hr);table.append(head);
     const body=el("tbody");
     for(const t of sortList(state.tasks)){

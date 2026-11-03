@@ -40,6 +40,18 @@
       ". Se cancela la auditoría para evitar resultados incompletos.");
     return data;
   }
+  async function fetchDomain(domain) {
+    const s=session();
+    const params=new URLSearchParams({select:"id,codigo,titulo,edicion",id:"eq."+domain,limit:"1"});
+    const response=await fetch(apiRoot+"/rest/v1/dominios_conocimiento?"+params,{
+      headers:{apikey:publicKey,Authorization:"Bearer "+s.access_token,Accept:"application/json"},
+      cache:"no-store"
+    });
+    const data=await response.json();
+    if(!response.ok||!Array.isArray(data)||data.length!==1)
+      throw new Error("No se pudo obtener el código de la metodología activa.");
+    return data[0];
+  }
   function sourceText(issue) {
     const refs=source.filter(p=>p.elemento_id===issue.elementId);
     const first=refs.find(p=>p.cita);
@@ -115,14 +127,15 @@
     running=true;$("auditoria-ejecutar").disabled=true;
     report("Consultando elementos, relaciones y evidencias del dominio seleccionado...");
     try{
-      const [elements,relations,evidence]=await Promise.all([
+      const [elements,relations,evidence,domainMeta]=await Promise.all([
         fetchRows("conocimiento_elementos","id,tipo,codigo,titulo,descripcion,estado,origen,documento_id,pagina",domain,1000),
         fetchRows("conocimiento_relaciones","id,origen_id,destino_id,tipo,detalle,documento_id,pagina,estado",domain,2000),
-        fetchRows("conocimiento_evidencias","elemento_id,documento_id,pagina,cita",domain,4000)
+        fetchRows("conocimiento_evidencias","elemento_id,documento_id,pagina,cita",domain,4000),
+        fetchDomain(domain)
       ]);
       // Una selección modificada durante la carga invalida el cálculo.
       if(domain!==$("modelo-dominio").value)throw new Error("Cambió el dominio durante la consulta. Vuelve a ejecutar.");
-      const domainName=$("modelo-dominio").selectedOptions?.[0]?.textContent||"";
+      const domainName=(domainMeta.codigo||"")+" "+(domainMeta.titulo||"");
       result=window.CIMAT_AUDITORIA_CORE.audit({elements,relations,evidence,domainLabel:domainName});
       source=evidence;currentDomain=domain;visibleLimit=35;
       $("auditoria-exportar").disabled=false;

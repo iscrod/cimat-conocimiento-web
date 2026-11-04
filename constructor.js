@@ -263,6 +263,7 @@
         const button=el("button","Revisar posible dependencia","outline");
         button.type="button";
         button.addEventListener("click",()=>{
+          $("v85-seq-panel").open=true;
           $("v85-seq-level").value="tarea";
           renderSequences();
           $("v85-seq-from").value=out.tarea_id;

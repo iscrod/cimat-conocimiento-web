@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>CIMAT | Plataforma de extracción de conocimiento</title>
-  <link rel="stylesheet" href="styles.css?v=0.8.5-2">
+  <link rel="stylesheet" href="styles.css?v=0.8.5-3">
 </head>
 <body>
 <main class="shell">
@@ -489,29 +489,33 @@
             <div class="form-actions"><button type="submit">Guardar tarea y sus relaciones</button><button type="button" id="v85-task-clear" class="outline">Nueva tarea</button></div>
             <p id="v85-task-feedback" class="form-status v85-inline-feedback" role="status" aria-live="polite"></p>
           </form>
-          <h3>Secuencia explícita</h3>
-          <p>Las tareas se muestran por orden de registro. La precedencia se define por separado: puedes enlazar tareas o actividades sin imponer una secuencia inexistente.</p>
-          <form id="v85-seq-form">
-            <label>Nivel de dependencia
-              <select id="v85-seq-level"><option value="tarea">Entre tareas</option><option value="actividad">Entre actividades</option></select>
-            </label>
-            <div class="grid compact-grid">
-              <label>Se realiza primero
-                <select id="v85-seq-from" required><option value="">Selecciona</option></select>
+          <details class="v85-subaccordion" id="v85-seq-panel">
+            <summary><h3>Registro de precedencia</h3></summary>
+            <p>Las tareas se muestran por orden de registro. La precedencia se define por separado: puedes enlazar tareas o actividades sin imponer una secuencia inexistente.</p>
+            <form id="v85-seq-form">
+              <label>Nivel de dependencia
+                <select id="v85-seq-level"><option value="tarea">Entre tareas</option><option value="actividad">Entre actividades</option></select>
               </label>
-              <label>Después sigue
-                <select id="v85-seq-to" required><option value="">Selecciona</option></select>
+              <div class="grid compact-grid">
+                <label>Se realiza primero
+                  <select id="v85-seq-from" required><option value="">Selecciona</option></select>
+                </label>
+                <label>Después sigue
+                  <select id="v85-seq-to" required><option value="">Selecciona</option></select>
+                </label>
+              </div>
+              <label>Justificación o condición de la dependencia (opcional)
+                <input id="v85-seq-note" maxlength="1000" placeholder="Solo cuando la fuente establezca la precedencia">
               </label>
-            </div>
-            <label>Justificación o condición de la dependencia (opcional)
-              <input id="v85-seq-note" maxlength="1000" placeholder="Solo cuando la fuente establezca la precedencia">
-            </label>
-            <button type="submit" class="outline">Registrar precedencia</button>
-          </form>
-          <div id="v85-seq-list" class="v85-records" aria-live="polite"></div>
-          <h3>Posibles conexiones por productos compartidos</h3>
-          <p class="subtle">Si una tarea genera o actualiza un producto que otra utiliza como entrada, CIMAT sugiere revisar una posible precedencia. No se registra ninguna dependencia automáticamente.</p>
-          <div id="v85-product-suggestions" class="v85-records" aria-live="polite"></div>
+              <button type="submit" class="outline">Registrar precedencia</button>
+            </form>
+            <div id="v85-seq-list" class="v85-records" aria-live="polite"></div>
+          </details>
+          <details class="v85-subaccordion" id="v85-suggestions-panel">
+            <summary><h3>Posibles conexiones por productos compartidos</h3></summary>
+            <p class="subtle">Si una tarea genera o actualiza un producto que otra utiliza como entrada, CIMAT sugiere revisar una posible precedencia. No se registra ninguna dependencia automáticamente.</p>
+            <div id="v85-product-suggestions" class="v85-records" aria-live="polite"></div>
+          </details>
           <h3>Tabla de tareas capturadas</h3>
           <div id="v85-task-table" class="v85-table-scroll" aria-live="polite"></div>
         </details>
@@ -553,6 +557,6 @@
 </main>
 <script src="config.js"></script>
 <script src="app.js?v=0.8.0" defer></script>
-<script src="constructor.js?v=0.8.5-4" defer></script>
+<script src="constructor.js?v=0.8.5-5" defer></script>
 </body>
 </html>

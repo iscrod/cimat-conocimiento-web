@@ -165,6 +165,15 @@ select[multiple] option{padding:7px 5px}
 .v85-accordion[open] > summary::after{content:"−"}
 .v85-accordion[open] > summary{border-bottom:1px solid #dce5f0;margin-bottom:14px}
 .v85-accordion > summary:focus-visible{outline:3px solid #648bab;outline-offset:4px;border-radius:8px}
+.v85-subaccordion{border:1px solid #d4e2ef;border-radius:10px;margin:16px 0;background:#fbfdff;padding:0 14px}
+.v85-subaccordion > summary{display:flex;justify-content:space-between;align-items:center;gap:14px;cursor:pointer;list-style:none;min-height:53px;padding:12px 0}
+.v85-subaccordion > summary::-webkit-details-marker{display:none}
+.v85-subaccordion > summary h3{margin:0;color:#244661;font-size:1rem}
+.v85-subaccordion > summary::after{content:"＋";font-size:21px;font-weight:700;color:#375d75;line-height:1;flex-shrink:0}
+.v85-subaccordion[open] > summary::after{content:"−"}
+.v85-subaccordion[open] > summary{border-bottom:1px solid #dce5f0;margin-bottom:12px}
+.v85-subaccordion > summary:focus-visible{outline:3px solid #648bab;outline-offset:3px;border-radius:6px}
+.v85-subaccordion > form,.v85-subaccordion > .v85-records{margin-bottom:14px}
 .v85-code-config{border:1px solid #d7e4ef;padding:13px 15px;border-radius:10px;background:#f7fafc;margin:14px 0}
 .v85-code-config button{margin:9px 0 4px}
 .v85-check-field{min-width:0;max-width:100%;border:1px solid #d4e2ef;border-radius:10px;padding:9px 10px 12px;background:#fafcff}

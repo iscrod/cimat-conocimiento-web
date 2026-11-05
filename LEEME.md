@@ -1,3 +1,9 @@
+## Orden según precedencias y conexiones diferenciadas de productos (noviembre de 2026)
+
+El diagrama Cytoscape ordena las tareas mediante una **ordenación topológica estable** de las precedencias explícitas ya registradas; las tareas sin dependencia mutua conservan el orden de captura. Este orden representa la relación almacenada, no valida su carácter normativo. Para GP.1, las 14 precedencias actuales son de prueba y enlazan GP.1.1 a GP.1.15.
+
+Se incorporaron **puertos de visualización** en el borde derecho de cada tarea: entrada (azul, parte superior) y salida/actualización (verde, parte inferior). Los enlaces con productos usan estos puertos para separar los puntos de conexión; los puertos son nodos gráficos auxiliares y no registros, relaciones ni versiones nuevas de la base de datos. El visor sigue siendo de solo lectura, con filtros y conexiones ortogonales.
+
 ## Ajuste de legibilidad del visor (noviembre de 2026)
 
 El visor permite elegir una **actividad concreta** dentro del proceso y muestra solo las tareas y relaciones que pertenecen a ella; también ofrece una opción para tareas sin actividad asignada, cuando existan. Las conexiones adoptan el trazado ortogonal de Cytoscape.js (`curve-style: taxi`) con segmentos horizontales y verticales. Al seleccionar un elemento se atenúa temporalmente el resto de la red para seguir sus vínculos; al tocar el fondo se restaura la vista completa. No se modifica la base de datos ni el alcance pendiente del versionamiento.

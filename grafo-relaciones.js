@@ -17,12 +17,43 @@
   };
   const mean = values => values.reduce((a, b) => a + b, 0) / values.length;
 
+  // Ordenación topológica estable: una precedencia siempre se respeta.
+  // Cuando dos tareas no tienen dependencia entre sí se conserva su orden de captura.
+  function orderByPrecedence(items, relations) {
+    const initial = chronological(items);
+    const rank = new Map(initial.map((item, index) => [item.id, index]));
+    const degree = new Map(initial.map(item => [item.id, 0]));
+    const outgoing = new Map(initial.map(item => [item.id, new Set()]));
+    for (const rel of relations) {
+      if (!degree.has(rel.anterior_id) || !degree.has(rel.siguiente_id) ||
+        rel.anterior_id === rel.siguiente_id) continue;
+      const followers = outgoing.get(rel.anterior_id);
+      if (followers.has(rel.siguiente_id)) continue;
+      followers.add(rel.siguiente_id);
+      degree.set(rel.siguiente_id, degree.get(rel.siguiente_id) + 1);
+    }
+    const available = initial.filter(item => degree.get(item.id) === 0);
+    const ordered = [];
+    while (available.length) {
+      available.sort((a, b) => rank.get(a.id) - rank.get(b.id));
+      const item = available.shift();
+      ordered.push(item);
+      for (const id of outgoing.get(item.id)) {
+        degree.set(id, degree.get(id) - 1);
+        if (degree.get(id) === 0) available.push(initial[rank.get(id)]);
+      }
+    }
+    // Protección ante datos inconsistentes: nunca perder tareas por un ciclo.
+    return ordered.length === initial.length ? ordered : initial;
+  }
+
   // Función pura: facilita las pruebas y separa el modelo de su representación.
   function buildGraph(state, processId, options = {}) {
     const process = state.processes.find(p => p.id === processId);
     const activityId = options.activityId || "";
-    const tasks = chronological(state.tasks.filter(t => t.proceso_id === processId &&
-      (!activityId || (activityId === "__sin_actividad__" ? !t.actividad_id : t.actividad_id === activityId))));
+    const tasks = orderByPrecedence(state.tasks.filter(t => t.proceso_id === processId &&
+      (!activityId || (activityId === "__sin_actividad__" ? !t.actividad_id : t.actividad_id === activityId))),
+    state.sequences);
     const taskIds = new Set(tasks.map(t => t.id));
     const taskY = new Map(tasks.map((t, i) => [t.id, 95 + i * 170]));
     const elements = [];
@@ -114,14 +145,24 @@
         addNode("product:" + product.id, "producto", product, x, y);
         counts.products++;
       }
+      // Puertos puramente visuales: separan entrada y salida sobre el borde derecho.
+      // No son tareas ni relaciones adicionales en la base de datos.
+      for (const task of tasks) {
+        if (relations.some(r => r.tarea_id === task.id && r.flujo === "entrada"))
+          addNode("port:input:" + task.id, "puerto-entrada", task,
+            95, taskY.get(task.id) - 24, {label: "", ownerTask: task.id});
+        if (relations.some(r => r.tarea_id === task.id && r.flujo !== "entrada"))
+          addNode("port:output:" + task.id, "puerto-salida", task,
+            95, taskY.get(task.id) + 24, {label: "", ownerTask: task.id});
+      }
       for (const [i, rel] of relations.entries()) {
         const isInput = rel.flujo === "entrada";
         const kind = isInput ? "entrada" : rel.flujo === "salida" ? "salida" : "actualiza";
         const label = kind === "entrada" ? "Producto de entrada" :
           kind === "salida" ? "Producto de salida" : "Producto actualizado";
         addEdge("task-product:" + i,
-          isInput ? "product:" + rel.producto_id : "task:" + rel.tarea_id,
-          isInput ? "task:" + rel.tarea_id : "product:" + rel.producto_id,
+          isInput ? "product:" + rel.producto_id : "port:output:" + rel.tarea_id,
+          isInput ? "port:input:" + rel.tarea_id : "product:" + rel.producto_id,
           kind, label + " en la tarea.");
       }
     }
@@ -220,6 +261,12 @@
           {selector: 'node[kind = "producto"]', style: {"background-color": "#deebfb", "border-color": "#4c79ac"}},
           {selector: 'node[kind = "rol"]', style: {"background-color": "#f0e5ff", "border-color": "#8964ba"}},
           {selector: 'node[kind = "actividad"]', style: {"background-color": "#fff0d7", "border-color": "#b3833b"}},
+          {selector: 'node[kind = "puerto-entrada"]', style: {"label": "", "shape": "ellipse",
+            "width": 10, "height": 10, "border-width": 1, "border-color": "#fff",
+            "background-color": "#5182b4", "z-index": 8}},
+          {selector: 'node[kind = "puerto-salida"]', style: {"label": "", "shape": "ellipse",
+            "width": 10, "height": 10, "border-width": 1, "border-color": "#fff",
+            "background-color": "#48956d", "z-index": 8}},
           {selector: "edge", style: {"width": 1.8, "line-color": "#a1b0bf", "curve-style": "taxi",
             "taxi-direction": "horizontal", "taxi-turn": "50%", "taxi-turn-min-distance": "16px",
             "target-arrow-shape": "triangle", "target-arrow-color": "#a1b0bf", "arrow-scale": 0.9}},
@@ -239,9 +286,16 @@
         ]
       });
       const focus = element => {
-        const related = element.isNode()
-          ? element.union(element.connectedEdges()).union(element.neighborhood("node"))
-          : element.union(element.connectedNodes());
+        let related = element.closedNeighborhood();
+        if (element.isNode() && element.data("kind") === "tarea") {
+          const ports = graphInstance.nodes().filter(node =>
+            node.data("ownerTask") === element.data("recordId"));
+          related = related.union(ports.closedNeighborhood());
+        }
+        // Si la relación termina en un puerto, incluir su tarea real al resaltar.
+        const owners = new Set(related.nodes().map(node => node.data("ownerTask")).filter(Boolean));
+        related = related.union(graphInstance.nodes().filter(node =>
+          node.data("kind") === "tarea" && owners.has(node.data("recordId"))));
         graphInstance.elements().removeClass("v85-graph-dimmed");
         graphInstance.elements().not(related).addClass("v85-graph-dimmed");
       };
@@ -251,8 +305,11 @@
         }
       });
       graphInstance.on("tap", "node", event => {
-        focus(event.target);
-        const d = event.target.data();
+        const selected = event.target.data("ownerTask")
+          ? graphInstance.getElementById("task:" + event.target.data("ownerTask"))
+          : event.target;
+        focus(selected);
+        const d = selected.data();
         const original = [...state.tasks, ...state.activities, ...state.products, ...state.catalog]
           .find(item => item.id === d.recordId);
         const document = state.documents.find(item => item.id === original?.documento_id);
@@ -274,7 +331,7 @@
         (c.suggestionOverflow ? " (" + c.suggestionOverflow + " omitidas por claridad)" : "") + "." : "");
       setDetail(detail, "Información del elemento", [
         "Selecciona una caja o flecha para consultar los detalles.",
-        "El orden vertical es el de captura; únicamente las precedencias registradas representan dependencias declaradas."
+        "Las tareas se ordenan respetando las precedencias registradas. Sin una dependencia entre dos tareas, se conserva su orden de captura."
       ]);
       window.requestAnimationFrame(() => {
         if (graphInstance && canvas.offsetWidth > 0) {

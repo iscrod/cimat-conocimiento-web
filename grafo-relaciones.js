@@ -20,7 +20,9 @@
   // Función pura: facilita las pruebas y separa el modelo de su representación.
   function buildGraph(state, processId, options = {}) {
     const process = state.processes.find(p => p.id === processId);
-    const tasks = chronological(state.tasks.filter(t => t.proceso_id === processId));
+    const activityId = options.activityId || "";
+    const tasks = chronological(state.tasks.filter(t => t.proceso_id === processId &&
+      (!activityId || (activityId === "__sin_actividad__" ? !t.actividad_id : t.actividad_id === activityId))));
     const taskIds = new Set(tasks.map(t => t.id));
     const taskY = new Map(tasks.map((t, i) => [t.id, 95 + i * 170]));
     const elements = [];
@@ -54,7 +56,8 @@
     for (const task of tasks) addNode("task:" + task.id, "tarea", task, 0, taskY.get(task.id));
 
     if (options.activities) {
-      const relevant = chronological(state.activities.filter(a => a.proceso_id === processId));
+      const relevant = chronological(state.activities.filter(a => a.proceso_id === processId &&
+        (!activityId || (activityId !== "__sin_actividad__" && a.id === activityId))));
       const positioned = relevant.map(a => {
         const positions = tasks.filter(t => t.actividad_id === a.id).map(t => taskY.get(t.id));
         return {item: a, average: positions.length ? mean(positions) : 95, label: name(a)};
@@ -183,7 +186,9 @@
     canvas.replaceChildren();
     const model = buildGraph(state, processId, options);
     if (!model.process || model.counts.tasks === 0) {
-      status.textContent = model.process ? "No hay tareas registradas para este proceso." : "Selecciona un proceso.";
+      status.textContent = !model.process ? "Selecciona un proceso." : options.activityId
+        ? "No hay tareas registradas para la actividad seleccionada."
+        : "No hay tareas registradas para este proceso.";
       setDetail(detail, "Información del elemento", ["Selecciona un proceso que contenga tareas."]);
       return;
     }
@@ -215,22 +220,38 @@
           {selector: 'node[kind = "producto"]', style: {"background-color": "#deebfb", "border-color": "#4c79ac"}},
           {selector: 'node[kind = "rol"]', style: {"background-color": "#f0e5ff", "border-color": "#8964ba"}},
           {selector: 'node[kind = "actividad"]', style: {"background-color": "#fff0d7", "border-color": "#b3833b"}},
-          {selector: "edge", style: {"width": 1.7, "line-color": "#a1b0bf", "curve-style": "bezier",
+          {selector: "edge", style: {"width": 1.8, "line-color": "#a1b0bf", "curve-style": "taxi",
+            "taxi-direction": "horizontal", "taxi-turn": "50%", "taxi-turn-min-distance": "16px",
             "target-arrow-shape": "triangle", "target-arrow-color": "#a1b0bf", "arrow-scale": 0.9}},
           {selector: 'edge[kind = "precedencia"]', style: {"width": 3.7, "line-color": "#233f56",
-            "target-arrow-color": "#233f56", "z-index": 5}},
+            "target-arrow-color": "#233f56", "taxi-direction": "leftward", "taxi-turn": "90px", "z-index": 5}},
           {selector: 'edge[kind = "sugerencia"]', style: {"width": 2.4, "line-style": "dashed",
-            "line-color": "#e19029", "target-arrow-color": "#e19029", "z-index": 4}},
+            "line-color": "#e19029", "target-arrow-color": "#e19029",
+            "taxi-direction": "rightward", "taxi-turn": "90px", "z-index": 4}},
           {selector: 'edge[kind = "entrada"]', style: {"line-color": "#5182b4", "target-arrow-color": "#5182b4"}},
           {selector: 'edge[kind = "salida"]', style: {"line-color": "#48956d", "target-arrow-color": "#48956d"}},
           {selector: 'edge[kind = "actualiza"]', style: {"line-color": "#af7b36", "target-arrow-color": "#af7b36"}},
           {selector: 'edge[kind = "participacion"]', style: {"line-style": "dotted", "line-color": "#987bb7",
             "target-arrow-color": "#987bb7"}},
           {selector: "node:selected", style: {"border-width": 4, "border-color": "#172f52"}},
-          {selector: "edge:selected", style: {"width": 5}}
+          {selector: "edge:selected", style: {"width": 5}},
+          {selector: ".v85-graph-dimmed", style: {"opacity": 0.13, "text-opacity": 0.13}}
         ]
       });
+      const focus = element => {
+        const related = element.isNode()
+          ? element.union(element.connectedEdges()).union(element.neighborhood("node"))
+          : element.union(element.connectedNodes());
+        graphInstance.elements().removeClass("v85-graph-dimmed");
+        graphInstance.elements().not(related).addClass("v85-graph-dimmed");
+      };
+      graphInstance.on("tap", event => {
+        if (event.target === graphInstance) {
+          graphInstance.elements().removeClass("v85-graph-dimmed");
+        }
+      });
       graphInstance.on("tap", "node", event => {
+        focus(event.target);
         const d = event.target.data();
         const original = [...state.tasks, ...state.activities, ...state.products, ...state.catalog]
           .find(item => item.id === d.recordId);
@@ -240,6 +261,7 @@
         setDetail(detail, d.fullName, ["Tipo: " + d.kind + ".", d.description, source]);
       });
       graphInstance.on("tap", "edge", event => {
+        focus(event.target);
         const d = event.target.data();
         const start = graphInstance.getElementById(d.source).data("fullName");
         const end = graphInstance.getElementById(d.target).data("fullName");

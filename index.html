@@ -552,10 +552,13 @@
 
         <details class="card v85-accordion" id="v85-graph-card">
           <summary><h2>Diagrama interactivo de relaciones · solo lectura</h2></summary>
-          <p>Vista experimental del proceso seleccionado. Utiliza los registros existentes; no modifica tareas, productos, roles ni precedencias.</p>
+          <p>Vista experimental del proceso seleccionado. Filtra por actividad y toca un elemento para resaltar sus conexiones. No modifica tareas, productos, roles ni precedencias.</p>
           <div class="v85-graph-toolbar">
             <label>Proceso a visualizar
               <select id="v85-graph-process"><option value="">Selecciona un proceso</option></select>
+            </label>
+            <label>Actividad a visualizar
+              <select id="v85-graph-activity"><option value="">Todas las actividades</option></select>
             </label>
             <button type="button" id="v85-graph-fit" class="outline">Ajustar vista</button>
           </div>
@@ -590,7 +593,7 @@
 <script src="config.js"></script>
 <script src="app.js?v=0.8.0" defer></script>
 <script src="vendor/cytoscape.min.js?v=3.34.4" defer></script>
-<script src="grafo-relaciones.js?v=0.8.5-1" defer></script>
-<script src="constructor.js?v=0.8.5-6" defer></script>
+<script src="grafo-relaciones.js?v=0.8.5-2" defer></script>
+<script src="constructor.js?v=0.8.5-7" defer></script>
 </body>
 </html>

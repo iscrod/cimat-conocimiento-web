@@ -194,6 +194,7 @@
     multi("v85-task-inputs",state.products,p=>p.nombre);
     multi("v85-task-outputs",state.products,p=>p.nombre);
     multi("v85-task-updates",state.products,p=>p.nombre);
+    refreshGraphActivityOptions();
     renderProcesses();renderTaskTable();renderSequences();renderProductSuggestions();refreshFeatures();renderDiagram();renderGraph();
   }
   function renderProcesses(){
@@ -362,10 +363,21 @@
     }
     root.append(diagram);
   }
+  function refreshGraphActivityOptions(keep=true){
+    const processId=$("v85-graph-process").value;
+    const node=$("v85-graph-activity");
+    const previous=keep?node.value:"";
+    const activities=sortList(state.activities.filter(a=>a.proceso_id===processId));
+    select("v85-graph-activity",activities,"Todas las actividades",short,false);
+    if(state.tasks.some(t=>t.proceso_id===processId&&!t.actividad_id))
+      node.add(new Option("Sin actividad asignada","__sin_actividad__"));
+    if(previous&&[...node.options].some(o=>o.value===previous))node.value=previous;
+  }
   function renderGraph(){
     if(!$("v85-graph-card")?.open)return;
     if(!window.CIMATGraph){$("v85-graph-status").textContent="No se cargó el visor de relaciones.";return;}
     window.CIMATGraph.render(state,$("v85-graph-process").value,{
+      activityId:$("v85-graph-activity").value,
       products:$("v85-graph-products").checked,
       roles:$("v85-graph-roles").checked,
       activities:$("v85-graph-activities").checked,
@@ -565,7 +577,8 @@
   $("v85-activity-parent").addEventListener("change",updateActivityCodeUI);
   $("v85-seq-level").addEventListener("change",renderSequences);
   $("v85-diagram-process").addEventListener("change",renderDiagram);
-  $("v85-graph-process").addEventListener("change",renderGraph);
+  $("v85-graph-process").addEventListener("change",()=>{refreshGraphActivityOptions(false);renderGraph();});
+  $("v85-graph-activity").addEventListener("change",renderGraph);
   for(const id of ["v85-graph-products","v85-graph-roles","v85-graph-activities","v85-graph-suggestions"]){
     $(id).addEventListener("change",renderGraph);
   }

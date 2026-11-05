@@ -1,3 +1,7 @@
+## Ajuste de legibilidad del visor (noviembre de 2026)
+
+El visor permite elegir una **actividad concreta** dentro del proceso y muestra solo las tareas y relaciones que pertenecen a ella; también ofrece una opción para tareas sin actividad asignada, cuando existan. Las conexiones adoptan el trazado ortogonal de Cytoscape.js (`curve-style: taxi`) con segmentos horizontales y verticales. Al seleccionar un elemento se atenúa temporalmente el resto de la red para seguir sus vínculos; al tocar el fondo se restaura la vista completa. No se modifica la base de datos ni el alcance pendiente del versionamiento.
+
 # Etapa 1 del visor de relaciones — prueba de GP.1 (noviembre de 2026)
 
 Se incorpora una vista experimental con Cytoscape.js (versión 3.34.4) bajo **Modelo y diagramas**, en un acordeón independiente del diagrama original. Genera automáticamente nodos y relaciones con los datos ya cargados del dominio desde las tablas `cimat_0852_*` de Supabase; no realiza escrituras ni añade tablas. Permite filtrar productos, roles, actividades y sugerencias no confirmadas; seleccionar elementos para consultar datos; ajustar zoom y desplazamiento. El orden vertical de tareas sigue la captura, **no** constituye una precedencia; las relaciones almacenadas se muestran como precedencias registradas, sin afirmar que ya estén validadas normativamente. Las hipótesis por productos coincidentes usan trazos discontinuos.

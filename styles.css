@@ -192,3 +192,25 @@ select[multiple] option{padding:7px 5px}
 
 /* Asegurar que las etiquetas opcionales ocultas respeten el atributo hidden. */
 #v85-activity-code-wrap[hidden]{display:none!important}
+
+/* Visor de relaciones de solo lectura: prueba de representación GP.1. */
+.v85-graph-toolbar{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:12px 0}
+.v85-graph-toolbar label{flex:1;min-width:230px;margin:0}
+.v85-graph-toolbar button{flex-shrink:0;margin-bottom:1px}
+.v85-graph-filters{display:flex;gap:9px 18px;flex-wrap:wrap;align-items:center;border:1px solid #dbe4ef;border-radius:10px;padding:10px 13px;margin:12px 0;background:#fbfdff}
+.v85-graph-filters legend{font-weight:650;color:#244661;font-size:13px;padding:0 5px}
+.v85-graph-filters label{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;margin:0}
+.v85-graph-filters input{width:16px;height:16px;accent-color:#386882}
+.v85-graph-canvas{height:580px;min-height:400px;width:100%;border:1px solid #c9d8e7;border-radius:12px;background:linear-gradient(180deg,#fbfdff,#eff5fa);overflow:hidden;touch-action:none}
+.v85-graph-legend{display:flex;gap:8px 15px;flex-wrap:wrap;margin:14px 0;font-size:12px;color:#3e5368}
+.v85-graph-legend span{display:inline-flex;align-items:center;gap:5px}
+.v85-graph-legend span::before{content:"";display:inline-block;width:13px;height:11px;border-radius:4px;background:#ddd;border:1px solid #aaa}
+.v85-graph-legend-task::before{background:#dcf1e2!important;border-color:#39805d!important}
+.v85-graph-legend-product::before{background:#deebfb!important;border-color:#4c79ac!important}
+.v85-graph-legend-role::before{background:#f0e5ff!important;border-color:#8964ba!important}
+.v85-graph-legend-activity::before{background:#fff0d7!important;border-color:#b3833b!important}
+.v85-graph-legend-precedence::before{background:#233f56!important;border-color:#233f56!important;height:3px!important;border-radius:0!important}
+.v85-graph-legend-suggestion::before{background:repeating-linear-gradient(to right,#e19029 0 4px,transparent 4px 7px)!important;border:0!important;height:3px!important;border-radius:0!important}
+#v85-graph-detail{margin:14px 0;min-height:78px}
+#v85-graph-detail p{overflow-wrap:anywhere}
+@media(max-width:640px){.v85-graph-canvas{height:510px;min-height:350px}.v85-graph-toolbar label{min-width:100%}}

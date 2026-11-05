@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>CIMAT | Plataforma de extracción de conocimiento</title>
-  <link rel="stylesheet" href="styles.css?v=0.8.5-3">
+  <link rel="stylesheet" href="styles.css?v=0.8.5-4">
 </head>
 <body>
 <main class="shell">
@@ -549,6 +549,38 @@
           <div id="v85-diagram" aria-live="polite"></div>
           <p class="subtle">Diagrama de trabajo: muestra relaciones capturadas, no una certificación del cumplimiento de la norma. Los documentos de la Biblioteca siguen disponibles como fuentes de contraste.</p>
         </details>
+
+        <details class="card v85-accordion" id="v85-graph-card">
+          <summary><h2>Diagrama interactivo de relaciones · solo lectura</h2></summary>
+          <p>Vista experimental del proceso seleccionado. Utiliza los registros existentes; no modifica tareas, productos, roles ni precedencias.</p>
+          <div class="v85-graph-toolbar">
+            <label>Proceso a visualizar
+              <select id="v85-graph-process"><option value="">Selecciona un proceso</option></select>
+            </label>
+            <button type="button" id="v85-graph-fit" class="outline">Ajustar vista</button>
+          </div>
+          <fieldset class="v85-graph-filters">
+            <legend>Mostrar relaciones y elementos</legend>
+            <label><input type="checkbox" id="v85-graph-products" checked> Productos</label>
+            <label><input type="checkbox" id="v85-graph-roles"> Roles</label>
+            <label><input type="checkbox" id="v85-graph-activities"> Actividades</label>
+            <label><input type="checkbox" id="v85-graph-suggestions"> Conexiones posibles (hipótesis)</label>
+          </fieldset>
+          <div class="v85-graph-legend" aria-label="Leyenda del diagrama">
+            <span class="v85-graph-legend-task">Tarea</span>
+            <span class="v85-graph-legend-product">Producto</span>
+            <span class="v85-graph-legend-role">Rol</span>
+            <span class="v85-graph-legend-activity">Actividad</span>
+            <span class="v85-graph-legend-precedence">Flecha oscura: precedencia registrada</span>
+            <span class="v85-graph-legend-suggestion">Línea naranja discontinua: hipótesis</span>
+          </div>
+          <div id="v85-graph-canvas" class="v85-graph-canvas" role="img" aria-label="Grafo navegable de tareas, productos y relaciones del proceso seleccionado"></div>
+          <p id="v85-graph-status" class="subtle" role="status" aria-live="polite">Selecciona un proceso para generar el diagrama.</p>
+          <div id="v85-graph-detail" class="v85-record" role="status" aria-live="polite">
+            <strong>Información del elemento</strong><p>Selecciona una caja o flecha del diagrama para consultar su información.</p>
+          </div>
+          <p class="subtle">La posición vertical de las tareas sigue el orden de captura, no establece una secuencia normativa. Las relaciones registradas durante las pruebas requieren cotejo con su fuente. Las coincidencias entre productos no constituyen precedencias hasta su validación documental.</p>
+        </details>
       </section>
     </section>
   </section>
@@ -557,6 +589,8 @@
 </main>
 <script src="config.js"></script>
 <script src="app.js?v=0.8.0" defer></script>
-<script src="constructor.js?v=0.8.5-5" defer></script>
+<script src="vendor/cytoscape.min.js?v=3.34.4" defer></script>
+<script src="grafo-relaciones.js?v=0.8.5-1" defer></script>
+<script src="constructor.js?v=0.8.5-6" defer></script>
 </body>
 </html>

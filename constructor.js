@@ -128,7 +128,12 @@
   async function load(){
     const domain=$("v85-domain").value;
     state.domain=domain;
-    if(!domain){message("Selecciona un dominio.");return;}
+    window.CIMATGraph?.destroy();
+    if(!domain){
+      $("v85-graph-canvas").replaceChildren();
+      $("v85-graph-status").textContent="Selecciona un dominio.";
+      message("Selecciona un dominio.");return;
+    }
     if(state.loading)return;
     state.loading=true;$("v85-refresh").disabled=true;
     message("Consultando catálogo manual del dominio...");
@@ -176,6 +181,11 @@
     select("v85-process-edit",sortList(state.processes),"+ Nuevo proceso",short);
     for(const id of ["v85-activity-parent","v85-task-process","v85-diagram-process"])
       select(id,sortList(state.processes),"Selecciona un proceso",short);
+    const graphProcess=select("v85-graph-process",sortList(state.processes),"Selecciona un proceso",short);
+    if(!graphProcess.value&&state.processes.length){
+      const preferred=sortList(state.processes).find(p=>String(p.codigo||"").trim().toUpperCase()==="GP.1");
+      graphProcess.value=(preferred||sortList(state.processes)[0]).id;
+    }
     select("v85-activity-edit",sortList(state.activities),"+ Nueva actividad",short);
     select("v85-product-edit",state.products.slice().sort((a,b)=>a.nombre.localeCompare(b.nombre,"es")),"+ Nuevo producto",p=>p.nombre);
     select("v85-task-edit",sortList(state.tasks),"+ Nueva tarea",short);
@@ -184,7 +194,7 @@
     multi("v85-task-inputs",state.products,p=>p.nombre);
     multi("v85-task-outputs",state.products,p=>p.nombre);
     multi("v85-task-updates",state.products,p=>p.nombre);
-    renderProcesses();renderTaskTable();renderSequences();renderProductSuggestions();refreshFeatures();renderDiagram();
+    renderProcesses();renderTaskTable();renderSequences();renderProductSuggestions();refreshFeatures();renderDiagram();renderGraph();
   }
   function renderProcesses(){
     const root=$("v85-process-list");root.replaceChildren();
@@ -351,6 +361,16 @@
       diagram.append(matching);
     }
     root.append(diagram);
+  }
+  function renderGraph(){
+    if(!$("v85-graph-card")?.open)return;
+    if(!window.CIMATGraph){$("v85-graph-status").textContent="No se cargó el visor de relaciones.";return;}
+    window.CIMATGraph.render(state,$("v85-graph-process").value,{
+      products:$("v85-graph-products").checked,
+      roles:$("v85-graph-roles").checked,
+      activities:$("v85-graph-activities").checked,
+      suggestions:$("v85-graph-suggestions").checked
+    });
   }
   function clearProcess(){$("v85-process-form").reset();$("v85-process-edit").value="";}
   function clearActivity(){$("v85-activity-form").reset();$("v85-activity-edit").value="";updateActivityCodeUI();}
@@ -545,6 +565,15 @@
   $("v85-activity-parent").addEventListener("change",updateActivityCodeUI);
   $("v85-seq-level").addEventListener("change",renderSequences);
   $("v85-diagram-process").addEventListener("change",renderDiagram);
+  $("v85-graph-process").addEventListener("change",renderGraph);
+  for(const id of ["v85-graph-products","v85-graph-roles","v85-graph-activities","v85-graph-suggestions"]){
+    $(id).addEventListener("change",renderGraph);
+  }
+  $("v85-graph-fit").addEventListener("click",()=>window.CIMATGraph?.fit());
+  $("v85-graph-card").addEventListener("toggle",()=>{
+    if($("v85-graph-card").open)window.requestAnimationFrame(renderGraph);
+    else window.CIMATGraph?.destroy();
+  });
   $("v85-process-clear").addEventListener("click",clearProcess);
   $("v85-activity-clear").addEventListener("click",clearActivity);
   $("v85-task-clear").addEventListener("click",clearTask);

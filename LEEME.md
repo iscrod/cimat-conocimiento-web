@@ -1,3 +1,9 @@
+# Etapa 1 del visor de relaciones — prueba de GP.1 (noviembre de 2026)
+
+Se incorpora una vista experimental con Cytoscape.js (versión 3.34.4) bajo **Modelo y diagramas**, en un acordeón independiente del diagrama original. Genera automáticamente nodos y relaciones con los datos ya cargados del dominio desde las tablas `cimat_0852_*` de Supabase; no realiza escrituras ni añade tablas. Permite filtrar productos, roles, actividades y sugerencias no confirmadas; seleccionar elementos para consultar datos; ajustar zoom y desplazamiento. El orden vertical de tareas sigue la captura, **no** constituye una precedencia; las relaciones almacenadas se muestran como precedencias registradas, sin afirmar que ya estén validadas normativamente. Las hipótesis por productos coincidentes usan trazos discontinuos.
+
+**Pendiente para pruebas del producto final, por decisión del usuario:** etapa 2, historial de cambios; etapa 3, versiones completas del modelo; etapa 4, comparación y recuperación controlada de versiones. Ninguna de estas tres etapas se implementó ahora. La biblioteca está incorporada localmente en `vendor/cytoscape.min.js`, con su licencia MIT en `vendor/CYTOSCAPE-LICENSE`; no requiere consultar un CDN de terceros.
+
 # CIMAT v0.8.5 — Mejoras de captura y presentación (3 de noviembre de 2026)
 
 Se implementaron ajustes de usabilidad al constructor manual, conservando todas las fichas existentes y las fuentes almacenadas en la Biblioteca:

@@ -183,7 +183,7 @@
       select(id,sortList(state.processes),"Selecciona un proceso",short);
     const graphProcess=select("v85-graph-process",sortList(state.processes),"Selecciona un proceso",short);
     if(!graphProcess.value&&state.processes.length){
-      const preferred=sortList(state.processes).find(p=>String(p.codigo||"").trim().toUpperCase()==="GP.1");
+      const preferred=sortList(state.processes).find(p=>["GP","GP.1"].includes(String(p.codigo||"").trim().toUpperCase()));
       graphProcess.value=(preferred||sortList(state.processes)[0]).id;
     }
     select("v85-activity-edit",sortList(state.activities),"+ Nueva actividad",short);

@@ -6,14 +6,15 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>CIMAT | Plataforma de extracción de conocimiento</title>
   <link rel="stylesheet" href="styles.css?v=0.8.5-4">
+  <link rel="stylesheet" href="cuestionario.css?v=0.8.6-1">
 </head>
 <body>
 <main class="shell">
   <header>
     <div>
-      <span class="tag">PROTOTIPO ACADÉMICO · V0.8.5</span>
+      <span class="tag">PROTOTIPO ACADÉMICO · V0.8.6</span>
       <h1>Plataforma de extracción de conocimiento</h1>
-      <p>Gestión organizacional y mejora de procesos de software · ISO/IEC 29110</p>
+      <p>Extracción de conocimiento tácito organizacional · modelos de referencia opcionales</p>
     </div>
     <div class="mark" aria-label="Identificador del proyecto">CIMAT</div>
   </header>
@@ -59,6 +60,7 @@
       <button type="button" class="tab" data-view="administracion" role="tab" aria-selected="false">Administración</button>
       <button type="button" class="tab" data-view="biblioteca" role="tab" aria-selected="false">Biblioteca</button>
       <button type="button" class="tab" data-view="modelo" role="tab" aria-selected="false">Modelo y diagramas</button>
+      <button type="button" class="tab" data-view="cuestionario" role="tab" aria-selected="false">Cuestionario genérico</button>
     </nav>
 
     <section data-panel="resumen" role="tabpanel">
@@ -316,6 +318,77 @@
 
       </section>
       <article class="card muted"><h2>Biblioteca documental · v0.8.5</h2><p>Aquí se conservan las fuentes originales. No se procesan automáticamente los documentos ni se extraen tablas; el constructor manual se encuentra en <strong>Modelo y diagramas</strong>.</p></article>
+    </section>
+
+
+    <!-- CIMAT 0.8.6: cuestionario generico, independiente de normas -->
+    <section data-panel="cuestionario" class="hidden" role="tabpanel">
+      <div class="section-heading">
+        <h2>Banco de preguntas genéricas · CIMAT 0.8.6</h2>
+        <p>Diseña un instrumento semiestructurado para descubrir cómo trabaja una persona, sin asumir previamente ningún modelo normativo.</p>
+      </div>
+      <article class="card">
+        <p class="subtle">Solo el administrador global puede configurar y publicar cuestionarios. Este módulo no realiza entrevistas, no utiliza IA y no almacena respuestas de trabajadores.</p>
+        <p id="c086-status" role="status" aria-live="polite">Selecciona esta sección para comprobar los permisos.</p>
+        <div id="c086-controls" class="hidden">
+          <div class="c086-toolbar">
+            <label>Cuestionario y versión
+              <select id="c086-bank-select"><option value="">Cargando cuestionarios...</option></select>
+            </label>
+            <button type="button" id="c086-new" class="outline">+ Cuestionario nuevo</button>
+            <button type="button" id="c086-new-version" class="outline">Crear nueva versión</button>
+            <button type="button" id="c086-reload" class="outline">Recargar</button>
+          </div>
+          <label>Nombre del instrumento
+            <input id="c086-bank-name" maxlength="180" minlength="3" placeholder="Cuestionario genérico de extracción de conocimiento tácito">
+          </label>
+          <div class="c086-metadata" aria-live="polite">
+            <span id="c086-current-version">Versión 1 · Borrador</span>
+            <span id="c086-count">0 preguntas</span>
+            <span id="c086-unsaved">Sin cambios pendientes</span>
+          </div>
+          <div class="c086-layout">
+            <section aria-label="Preguntas del cuestionario">
+              <h3>Preguntas del instrumento</h3>
+              <p class="subtle">Puedes reorganizar, editar o deshabilitar preguntas del borrador. La prioridad diferencia preguntas principales de complementarias.</p>
+              <div id="c086-questions" class="c086-question-list" aria-live="polite"></div>
+            </section>
+            <form id="c086-form" class="c086-editor">
+              <h3>Editar o añadir pregunta</h3>
+              <input type="hidden" id="c086-question-id">
+              <label>Dimensión de conocimiento
+                <select id="c086-dimension" required></select>
+              </label>
+              <label>Prioridad para la entrevista
+                <select id="c086-priority">
+                  <option value="principal">Principal</option>
+                  <option value="complementaria">Complementaria</option>
+                </select>
+              </label>
+              <label>Pregunta abierta, neutral y genérica
+                <textarea id="c086-question-text" minlength="10" maxlength="700" rows="3" required placeholder="¿Podría contarme cómo realiza normalmente su trabajo?"></textarea>
+              </label>
+              <label>Objetivo de extracción (opcional)
+                <textarea id="c086-objective" maxlength="350" rows="2" placeholder="Información que se pretende comprender"></textarea>
+              </label>
+              <label>Posibles preguntas de profundización (una por línea)
+                <textarea id="c086-probes" rows="5" placeholder="¿Podría darme un ejemplo concreto?&#10;¿Qué sucede cuando es diferente?"></textarea>
+              </label>
+              <p class="subtle">Los sondeos se registran como sugerencias metodológicas. Su selección automática se implementará en versiones posteriores.</p>
+              <label class="checkline"><input type="checkbox" id="c086-enabled" checked> Habilitada para el cuestionario</label>
+              <div class="form-actions">
+                <button type="submit" id="c086-question-submit">Agregar pregunta</button>
+                <button type="button" id="c086-new-question" class="outline">Limpiar editor</button>
+              </div>
+            </form>
+          </div>
+          <div class="c086-actionbar">
+            <button type="button" id="c086-save">Guardar borrador</button>
+            <button type="button" id="c086-publish" class="outline">Publicar esta versión</button>
+          </div>
+          <p class="subtle">Una versión publicada no puede alterarse. Para introducir cambios, crea una nueva versión que conserve el cuestionario anterior.</p>
+        </div>
+      </article>
     </section>
 
     <section data-panel="modelo" class="hidden" role="tabpanel">
@@ -595,5 +668,6 @@
 <script src="vendor/cytoscape.min.js?v=3.34.4" defer></script>
 <script src="grafo-relaciones.js?v=0.8.5-3" defer></script>
 <script src="constructor.js?v=0.8.5-7" defer></script>
+ <script src="cuestionario.js?v=0.8.6-1" defer></script>
 </body>
 </html>

@@ -1,0 +1,29 @@
+/* CIMAT 0.8.6: banco de preguntas genericas y versionadas. */
+.c086-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin:16px 0}
+.c086-toolbar label{flex:1;min-width:250px;margin:0}
+.c086-toolbar button{flex-shrink:0}
+.c086-metadata{display:flex;gap:9px 14px;flex-wrap:wrap;align-items:center;margin:8px 0 15px}
+.c086-metadata span{font-size:12px;color:#426078}
+.c086-metadata span:first-child{font-weight:700;color:#173b5e}
+.c086-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,0.85fr);gap:18px;align-items:start;margin:20px 0}
+.c086-question-list{display:grid;gap:10px;max-height:730px;overflow-y:auto;padding-right:3px}
+.c086-question{border:1px solid #d4e2ec;border-radius:10px;padding:13px;background:#fff}
+.c086-question.c086-disabled{opacity:.73;background:#f1f4f7}
+.c086-question-title{display:flex;justify-content:space-between;gap:8px;align-items:start}
+.c086-question-title strong{color:#15344b;line-height:1.5;font-size:13px;overflow-wrap:anywhere}
+.c086-state{white-space:nowrap;font-size:10px;padding:4px 6px;border-radius:5px;color:#2c644b;background:#e6f5ec}
+.c086-disabled .c086-state{color:#5b6271;background:#e2e7ed}
+.c086-question .subtle{font-size:12px;margin:7px 0}
+.c086-question-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.c086-question-actions button{font-size:11px;padding:6px 8px}
+.c086-editor{border:1px solid #d8e5f0;background:#f9fcfe;border-radius:12px;padding:17px}
+.c086-editor h3{margin:0 0 12px}
+.c086-editor label{display:block;margin-bottom:13px}
+.c086-editor textarea{min-height:73px}
+.c086-editor .checkline{display:flex;gap:10px;align-items:center}
+.c086-actionbar{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px;padding-top:16px;border-top:1px solid #dce5ed}
+.c086-actionbar button{flex:0 1 auto}
+#c086-status{margin:12px 0;padding:11px 12px;border-radius:8px;background:#f0f6fa;color:#284d63;min-height:24px;overflow-wrap:anywhere}
+#c086-status.error{background:#fff1f1;color:#8d2e2e;border:1px solid #d9a6a6}
+#c086-unsaved{font-weight:600}
+@media(max-width:850px){.c086-layout{grid-template-columns:1fr}.c086-question-list{max-height:none}.c086-toolbar label{min-width:100%}}

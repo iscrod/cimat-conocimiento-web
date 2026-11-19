@@ -25,6 +25,7 @@
     ["otro", "Otra dimensión"]
   ];
   let loaded = false;
+  let adminUserId = null;
   let loading = false;
   let banks = [];
   let selected = null;
@@ -314,16 +315,26 @@
     finally { loading = false; if (button) button.disabled = old; refreshActions(); }
   }
   async function init() {
-    if (loaded) return;
-    message("Comprobando permisos...");
     try {
+      const userId = session().user.id;
+      if (loaded && adminUserId === userId) return;
+      // Nunca conservar datos del administrador anterior entre sesiones.
+      loaded = false;
+      adminUserId = null;
+      selected = null;
+      banks = [];
+      working = [];
+      dirty = false;
+      $("c086-questions").replaceChildren();
+      $("c086-controls").classList.add("hidden");
+      message("Comprobando permisos...");
       const isAdmin = await request("/rest/v1/rpc/mi_acceso_administrador","POST",{});
       if (isAdmin !== true) {
         message("La configuración del instrumento está reservada al administrador global.");
-        $("c086-controls").classList.add("hidden");
         return;
       }
       await loadBanks();
+      adminUserId = userId;
       $("c086-controls").classList.remove("hidden");
       loaded = true;
       message("Banco de preguntas disponible. No depende de una norma o estándar.");

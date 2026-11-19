@@ -374,6 +374,20 @@
       await loadBanks(selected?.id||"");
       message("Datos actualizados desde Supabase.");
     },e.currentTarget));
+    // Limpiar cualquier dato de una sesión anterior inmediatamente al salir o ingresar.
+    const resetSessionUI = () => {
+      loaded = false;
+      adminUserId = null;
+      selected = null;
+      banks = [];
+      working = [];
+      dirty = false;
+      $("c086-questions").replaceChildren();
+      $("c086-controls").classList.add("hidden");
+      message("Selecciona esta sección para comprobar los permisos.");
+    };
+    $("logout")?.addEventListener("click", resetSessionUI);
+    $("login-form")?.addEventListener("submit", resetSessionUI);
     document.querySelector('[data-view="cuestionario"]')?.addEventListener("click",init);
   }
   if ($("c086-controls")) bind();

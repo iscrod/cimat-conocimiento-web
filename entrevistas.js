@@ -195,7 +195,7 @@
     $("c087-question").textContent=q.pregunta;
     $("c087-answer").value=saved?.estado==="respondida" ? saved.respuesta : "";
     $("c087-answer").readOnly=!isEditable();
-    $("c087-answer").disabled=saved?.estado==="omitida" || !isEditable();
+    $("c087-answer").disabled=!isEditable();
     $("c087-answer").maxLength=10000;
     $("c087-record-state").textContent=saved
       ? saved.estado==="respondida" ? "Respuesta guardada" : "Pregunta omitida"

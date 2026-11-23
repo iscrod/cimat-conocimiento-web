@@ -1,0 +1,32 @@
+/* CIMAT 0.8.7 — Entrevistas genéricas; sin dependencias de normas. */
+.c087-intro{border-left:4px solid #357a98;background:#f4f9fc;padding:13px 16px;border-radius:8px;margin:12px 0}
+.c087-consent-panel{border:1px solid #d4e2ed;background:#fafcff;padding:18px;border-radius:12px;margin-top:14px}
+.c087-consent-panel h3{margin-top:0}
+.c087-consent-panel .checkline{display:flex;align-items:flex-start;gap:12px}
+.c087-consent-panel .checkline input{width:20px;height:20px;margin:3px 0 0;flex-shrink:0}
+.c087-consent-panel .checkline span{line-height:1.5}
+.c087-sessions{display:grid;gap:10px;margin:16px 0}
+.c087-session{border:1px solid #dbe5ed;border-radius:11px;padding:15px;background:white;overflow-wrap:anywhere}
+.c087-session-heading{display:flex;justify-content:space-between;gap:9px;align-items:flex-start}
+.c087-session-heading strong{font-size:14px;color:#1d3f5e;line-height:1.5}
+.c087-session .subtle{margin:7px 0}
+.c087-tag{flex-shrink:0;border-radius:6px;background:#eaf4f3;color:#1f6658;padding:5px 9px;font-size:11px;font-weight:700}
+.c087-session button{font-size:12px;padding:8px 12px;margin-top:7px}
+.c087-active{border-top:4px solid #38826f}
+.c087-active h3{margin-top:6px}
+.c087-progress{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;padding:13px;border-radius:8px;background:#f1f6fa;margin:15px 0}
+.c087-progress strong{color:#234764}
+.c087-question{background:#fff;border:1px solid #d5e0e9;border-radius:12px;padding:18px;margin:16px 0}
+.c087-question h4{font-size:18px;line-height:1.5;margin:8px 0 12px;color:#153750}
+.c087-question textarea{width:100%;min-height:180px;font-size:15px}
+.c087-question textarea[readonly],.c087-question textarea:disabled{background:#f4f6f8;color:#4a5c6d}
+.c087-question-state{font-size:13px;color:#3e6582;margin-top:8px}
+.c087-actions{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}
+.c087-actions button{font-size:13px;padding:10px 13px}
+.c087-actions-secondary{border-top:1px solid #e1e8ee;padding-top:14px}
+#c087-status{margin:10px 0;padding:12px;border-radius:8px;background:#f0f6fa;color:#254a61;overflow-wrap:anywhere}
+#c087-status.error{border:1px solid #dfbaba;background:#fff3f2;color:#a33232}
+#c087-record-state,#c087-dirty{font-size:12px;margin:6px 0;color:#597187}
+#c087-dirty{color:#a45c1e;font-weight:650}
+.c087-warning{font-size:13px;color:#835329;background:#fff8ed;border:1px solid #eed8b5;border-radius:8px;padding:12px;margin:13px 0}
+@media(max-width:680px){.c087-actions button{flex:1 1 40%}.c087-session-heading{flex-direction:column}.c087-question{padding:13px}}

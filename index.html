@@ -7,12 +7,13 @@
   <title>CIMAT | Plataforma de extracción de conocimiento</title>
   <link rel="stylesheet" href="styles.css?v=0.8.5-4">
   <link rel="stylesheet" href="cuestionario.css?v=0.8.6-1">
+  <link rel="stylesheet" href="entrevistas.css?v=0.8.7-1">
 </head>
 <body>
 <main class="shell">
   <header>
     <div>
-      <span class="tag">PROTOTIPO ACADÉMICO · V0.8.6</span>
+      <span class="tag">PROTOTIPO ACADÉMICO · V0.8.7</span>
       <h1>Plataforma de extracción de conocimiento</h1>
       <p>Extracción de conocimiento tácito organizacional · modelos de referencia opcionales</p>
     </div>
@@ -61,6 +62,7 @@
       <button type="button" class="tab" data-view="biblioteca" role="tab" aria-selected="false">Biblioteca</button>
       <button type="button" class="tab" data-view="modelo" role="tab" aria-selected="false">Modelo y diagramas</button>
       <button type="button" class="tab" data-view="cuestionario" role="tab" aria-selected="false">Cuestionario genérico</button>
+      <button type="button" class="tab" data-view="entrevistas" role="tab" aria-selected="false">Entrevistas</button>
     </nav>
 
     <section data-panel="resumen" role="tabpanel">
@@ -391,6 +393,76 @@
       </article>
     </section>
 
+
+    <!-- CIMAT 0.8.7: entrevistas genéricas privadas con consentimiento informado. -->
+    <section data-panel="entrevistas" class="hidden" role="tabpanel">
+      <div class="section-heading">
+        <h2>Entrevistas de conocimiento tácito · CIMAT 0.8.7</h2>
+        <p>Describa cómo realiza realmente su trabajo. El cuestionario es genérico y no parte de ninguna norma, sector o metodología.</p>
+      </div>
+      <article class="card">
+        <p id="c087-status" role="status" aria-live="polite">Abre esta sección para verificar tu acceso.</p>
+        <div id="c087-access" class="hidden">
+          <div class="c087-intro">
+            <strong>Entrevista personal y voluntaria</strong>
+            <p>Las preguntas pretenden conocer actividades, experiencias, decisiones y situaciones que ocurren en la práctica. No existen respuestas correctas o incorrectas.</p>
+          </div>
+          <div class="c087-warning">
+            <strong>Etapa de pruebas académicas:</strong> utiliza únicamente situaciones y respuestas ficticias hasta que exista una revisión de privacidad, un aviso de tratamiento de datos y las autorizaciones institucionales para participar con información real. Evita nombres de terceros, contraseñas y datos confidenciales.
+          </div>
+          <section class="c087-consent-panel" aria-label="Consentimiento informado">
+            <h3>1. Crear una entrevista</h3>
+            <label>Cuestionario publicado
+              <select id="c087-bank"><option value="">Cargando cuestionarios...</option></select>
+            </label>
+            <p id="c087-bank-none" class="subtle hidden">No hay cuestionarios publicados disponibles. El administrador puede publicar uno en «Cuestionario genérico».</p>
+            <h3>Información de participación</h3>
+            <p>El propósito es documentar relatos sobre la ejecución de actividades de trabajo para una investigación académica de extracción del conocimiento tácito. La participación es voluntaria; puedes omitir preguntas, guardar y reanudar después, o retirar tu consentimiento.</p>
+            <p>Se guardarán el cuestionario seleccionado, la fecha de aceptación y las respuestas escritas en Supabase. En esta versión no se graba audio ni vídeo, ni se envían las respuestas a un modelo de inteligencia artificial. Las respuestas son visibles únicamente para la cuenta que las registró, según las reglas de acceso actuales.</p>
+            <p>Si retiras el consentimiento, se eliminarán la sesión y sus respuestas de las tablas activas. La eliminación no implica necesariamente la eliminación inmediata de copias de respaldo o registros técnicos del proveedor. No existe todavía un plazo de conservación formal para datos de participantes reales.</p>
+            <label class="checkline">
+              <input id="c087-consent" type="checkbox">
+              <span>He leído esta información y <strong>acepto voluntariamente</strong> crear una sesión de prueba y guardar las respuestas que introduzca. Comprendo que puedo omitir preguntas o retirar mi consentimiento.</span>
+            </label>
+            <button id="c087-create" type="button" disabled>Comenzar entrevista</button>
+          </section>
+          <section aria-label="Historial de entrevistas personales">
+            <h3>2. Mis entrevistas</h3>
+            <p class="subtle">Únicamente puedes consultar tus propias sesiones. Las entrevistas en curso se reanudan desde la primera pregunta pendiente.</p>
+            <button id="c087-refresh" type="button" class="outline">Actualizar lista</button>
+            <div id="c087-list" class="c087-sessions" aria-live="polite"></div>
+          </section>
+        </div>
+      </article>
+      <article id="c087-active" class="card c087-active hidden" aria-label="Entrevista actual">
+        <h3 id="c087-active-title">Entrevista</h3>
+        <p id="c087-active-state" class="subtle"></p>
+        <div class="c087-progress">
+          <strong id="c087-progress">0 de 0 preguntas registradas</strong>
+          <span id="c087-index">Pregunta 1</span>
+        </div>
+        <div class="c087-question">
+          <h4 id="c087-question">Pregunta</h4>
+          <label for="c087-answer">Respuesta del entrevistado</label>
+          <textarea id="c087-answer" rows="7" maxlength="10000" placeholder="Describa lo ocurrido con sus propias palabras. Puede dar un ejemplo concreto."></textarea>
+          <p id="c087-record-state" class="c087-question-state" aria-live="polite">Sin respuesta registrada</p>
+          <p id="c087-dirty" aria-live="polite"></p>
+        </div>
+        <div class="c087-actions">
+          <button type="button" id="c087-prev" class="outline">Pregunta anterior</button>
+          <button type="button" id="c087-next" class="outline">Siguiente pregunta</button>
+          <button type="button" id="c087-save">Guardar y continuar</button>
+          <button type="button" id="c087-omit" class="outline">Omitir esta pregunta</button>
+        </div>
+        <div class="c087-actions c087-actions-secondary">
+          <button type="button" id="c087-pause" class="outline">Pausar entrevista</button>
+          <button type="button" id="c087-finish">Finalizar entrevista</button>
+          <button type="button" id="c087-withdraw" class="outline">Retirar consentimiento y borrar sesión</button>
+        </div>
+        <p class="subtle">La versión publicada del cuestionario permanece fija durante toda la entrevista. En esta versión no se generan preguntas automáticas de seguimiento, diagnósticos ni modelos de proceso.</p>
+      </article>
+    </section>
+
     <section data-panel="modelo" class="hidden" role="tabpanel">
       <article class="card">
         <h2>Constructor manual de metodologías · v0.8.5</h2>
@@ -669,5 +741,6 @@
 <script src="grafo-relaciones.js?v=0.8.5-3" defer></script>
 <script src="constructor.js?v=0.8.5-7" defer></script>
  <script src="cuestionario.js?v=0.8.6-2" defer></script>
+<script src="entrevistas.js?v=0.8.7-1" defer></script>
 </body>
 </html>

@@ -84,3 +84,10 @@ Pruebas de integración SQL con contexto de rol autenticado y transacción rever
 - Supabase. *Securing your API*. https://supabase.com/docs/guides/api/securing-your-api
 
 **Advertencia metodológica:** el diseño de CIMAT 0.8.7 es una propuesta de ingeniería fundamentada en métodos de elicitación, pero no una demostración empírica de que el cuestionario extrae conocimiento tácito con determinada precisión. La evaluación científica se realizará mediante entrevistas piloto y revisión de expertos.
+
+## 9. Ajuste adicional de seguridad y retiro
+
+- `sql/cimat_087_seguridad_ajustes.sql` sustituye la función privilegiada expuesta por una comprobación interna en el esquema `private`, dejando un envoltorio `SECURITY INVOKER` en la API pública. Se mantiene la misma regla de autorización.
+- Si se revoca posteriormente el rol de entrevistado, la persona puede seguir leyendo sus sesiones previas, consultar el instrumento publicado que utilizaron y retirar su consentimiento mediante eliminación. No puede iniciar entrevistas nuevas.
+- Las pruebas SQL verificaron rechazo de preguntas ajenas, protección de respuestas finalizadas y eliminación en cascada; no se conservaron los registros sintéticos empleados en esas pruebas.
+- La revisión de seguridad confirmó RLS activo y ausencia de permisos públicos para `anon` en las tablas de sesiones y respuestas. Permanecen avisos de configuración generales no atribuibles al módulo 0.8.7.

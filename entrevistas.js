@@ -18,6 +18,7 @@
   let index = 0;
   let unsaved = false;
   let busy = false;
+  let canStart = false;
 
   function session() {
     let s = null;
@@ -89,6 +90,7 @@
   }
   function clearPrivateView() {
     owner = "";
+    canStart = false;
     banks = [];
     interviews = [];
     clearActive();
@@ -115,7 +117,7 @@
     banks.forEach(b=>target.append(option(b.id,b.titulo+" · v"+b.version+
       " ("+questions(b).length+" preguntas)")));
     if (banks.some(b=>b.id===selected))target.value=selected;
-    $("c087-create").disabled = !target.value || !$("c087-consent").checked || busy;
+    $("c087-create").disabled = !canStart || !target.value || !$("c087-consent").checked || busy;
     $("c087-bank-none").classList.toggle("hidden",banks.length!==0);
   }
   function displayList() {
@@ -161,14 +163,18 @@
       clearPrivateView();
       notice("Comprobando permisos y cuestionarios publicados...");
       const allowed=await api("/rest/v1/rpc/cimat_087_puede_entrevistarse","POST",{});
-      if (allowed!==true) {
-        notice("Se necesita una asignación activa como «Entrevistado» o autorización como administrador global. Solicita al administrador que habilite tu acceso.");
-        return;
-      }
+      canStart = allowed===true;
       await reload();
       owner=id;
+      if (!canStart && !interviews.length) {
+        notice("Para iniciar entrevistas debes tener el rol activo «Entrevistado» o ser administrador global. Si te han retirado el rol, tus sesiones privadas no se divulgarán.");
+        return;
+      }
       $("c087-access").classList.remove("hidden");
-      notice("Puedes realizar entrevistas con preguntas genéricas. Las respuestas solo son visibles para tu cuenta.");
+      $("c087-bank").closest(".c087-consent-panel")?.classList.toggle("hidden",!canStart);
+      notice(canStart
+        ? "Puedes realizar entrevistas genéricas. Solo tú puedes ver tus respuestas."
+        : "Tu rol de entrevistado no está activo. Aún puedes consultar o retirar el consentimiento de tus entrevistas anteriores.");
     } catch(err) {
       clearPrivateView();
       notice("No fue posible iniciar el módulo: "+err.message,true);
@@ -262,6 +268,7 @@
     notice(status==="respondida"?"Respuesta guardada en Supabase.":"Omisión guardada. Puedes continuar.");
   }
   async function start() {
+    if (!canStart) throw new Error("Tu cuenta no tiene permiso para iniciar entrevistas nuevas.");
     const bankId=$("c087-bank").value,consent=$("c087-consent").checked;
     if (!consent)throw new Error("Debes confirmar voluntariamente el consentimiento antes de comenzar.");
     if (!banks.some(b=>b.id===bankId))throw new Error("Selecciona un cuestionario publicado.");

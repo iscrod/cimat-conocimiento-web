@@ -10,12 +10,13 @@
   <link rel="stylesheet" href="entrevistas.css?v=0.8.7-1">
   <link rel="stylesheet" href="beta.css?v=1.0.0-beta-1">
   <link rel="stylesheet" href="chat.css?v=1.0.0-beta-chat-1">
+  <link rel="stylesheet" href="indice-inteligente.css?v=1.0.0-beta-2">
 </head>
 <body>
 <main class="shell">
   <header>
     <div>
-      <span class="tag">PROTOTIPO ACADÉMICO · V1.0.0-BETA</span>
+      <span class="tag">PROTOTIPO ACADÉMICO · V1.0.0-BETA.2</span>
       <h1>Plataforma de extracción de conocimiento</h1>
       <p>Extracción de conocimiento tácito organizacional · modelos de referencia opcionales</p>
     </div>
@@ -62,6 +63,7 @@
       <button type="button" class="tab" data-view="perfil" role="tab" aria-selected="false">Mi perfil</button>
       <button type="button" class="tab" data-view="administracion" role="tab" aria-selected="false">Administración</button>
       <button type="button" class="tab" data-view="biblioteca" role="tab" aria-selected="false">Biblioteca</button>
+      <button type="button" class="tab" data-view="indice" role="tab" aria-selected="false">Índice Inteligente</button>
       <button type="button" class="tab" data-view="modelo" role="tab" aria-selected="false">Modelo y diagramas</button>
       <button type="button" class="tab" data-view="cuestionario" role="tab" aria-selected="false">Cuestionario genérico</button>
       <button type="button" class="tab" data-view="entrevistas" role="tab" aria-selected="false">Entrevistas</button>
@@ -669,6 +671,118 @@
       </article>
     </section>
 
+
+    <!-- CIMAT 1.0.0-beta.2: capa derivada de la Biblioteca, sin modificar modelos aprobados. -->
+    <section data-panel="indice" class="hidden" role="tabpanel">
+      <div class="section-heading">
+        <h2>Índice Inteligente de Conocimiento · CIMAT 1.0.0-beta.2</h2>
+        <p>Administración del catálogo unificado, prácticas, criterios y consultas para el entrevistador. La Biblioteca original se mantiene intacta.</p>
+      </div>
+      <article class="card">
+        <p class="c12-caution"><strong>Prototipo académico:</strong> los resultados son correspondencias exploratorias, no dictámenes de conformidad. Los documentos y datos personales reales requieren autorización institucional. Los embeddings de modelos compartidos se generan únicamente si el administrador autoriza su envío externo.</p>
+        <p id="c12-status" role="status" aria-live="polite">Abre esta pestaña para consultar el catálogo.</p>
+        <div id="c12-controls" class="hidden">
+          <p id="c12-stats" role="status">Consultando estadísticas...</p>
+          <div class="c12-actions">
+            <button type="button" id="c12-refresh" class="outline">Actualizar datos</button>
+            <button type="button" id="c12-rebuild">Reconstruir índice desde Biblioteca</button>
+          </div>
+          <p id="c12-catalog-summary" class="subtle"></p>
+          <div class="c12-layout">
+            <section class="c12-card">
+              <h3>1. Prácticas de métodos no prescriptivos</h3>
+              <p class="subtle">Añade prácticas opcionales con su fuente exacta. El modelo original no se modifica. Una interpretación no debe presentarse como texto literal normativo.</p>
+              <form id="c12-practice-form">
+                <div class="c12-grid">
+                  <label>Modelo o metodología
+                    <select id="c12-domain" required><option value="">Seleccionar</option></select>
+                  </label>
+                  <label>Procedencia
+                    <select id="c12-practice-kind"><option value="explicita">Explícita en la fuente</option><option value="interpretada">Interpretación pendiente de revisión</option></select>
+                  </label>
+                </div>
+                <label>Nombre de la práctica
+                  <input id="c12-practice-name" minlength="3" maxlength="250" required placeholder="Por ejemplo: revisar el incremento de trabajo">
+                </label>
+                <label>Descripción
+                  <textarea id="c12-practice-desc" maxlength="4000" rows="3" placeholder="Describa la práctica sin añadir requisitos no respaldados"></textarea>
+                </label>
+                <div class="c12-grid">
+                  <label>Documento de referencia (opcional)
+                    <select id="c12-document"><option value="">Sin documento</option></select>
+                  </label>
+                  <label>Página física (opcional)
+                    <input id="c12-page" type="number" min="1">
+                  </label>
+                </div>
+                <label>Apartado de la fuente (opcional)
+                  <input id="c12-section" maxlength="120" placeholder="Sección / párrafo">
+                </label>
+                <button type="submit">Registrar práctica</button>
+              </form>
+            </section>
+            <section class="c12-card">
+              <h3>2. Criterios vinculados a elementos</h3>
+              <p class="subtle">Los criterios adicionales pueden referirse a tareas, productos, actividades o prácticas; se conserva su procedencia y su carácter explícito o interpretado.</p>
+              <form id="c12-criterion-form">
+                <div class="c12-grid">
+                  <label>Modelo o metodología
+                    <select id="c12-target-domain" required><option value="">Seleccionar</option></select>
+                  </label>
+                  <label>Procedencia
+                    <select id="c12-criterion-kind"><option value="explicito">Explícita en la fuente</option><option value="interpretado">Interpretación pendiente de revisión</option></select>
+                  </label>
+                </div>
+                <label>Elemento al que pertenece
+                  <select id="c12-target" required><option value="">Selecciona un elemento</option></select>
+                </label>
+                <label>Descripción del criterio verificable
+                  <textarea id="c12-criterion-text" minlength="8" maxlength="1500" required rows="3" placeholder="Criterio sustentado en la referencia, sin introducirlo en la pregunta al trabajador"></textarea>
+                </label>
+                <div class="c12-grid">
+                  <label>Documento (opcional)
+                    <select id="c12-criterion-document"><option value="">Sin documento</option></select>
+                  </label>
+                  <label>Página (opcional)
+                    <input id="c12-criterion-page" type="number" min="1">
+                  </label>
+                </div>
+                <label>Apartado de la fuente
+                  <input id="c12-criterion-section" maxlength="120" placeholder="Sección / párrafo">
+                </label>
+                <button type="submit">Añadir criterio</button>
+              </form>
+            </section>
+            <section class="c12-card">
+              <h3>3. Vectorización semántica y búsqueda híbrida</h3>
+              <p id="c12-embeddings-status" class="subtle">Comprobando proveedor...</p>
+              <label class="c12-checkbox"><input id="c12-embed-consent" type="checkbox"><span>Autorizo enviar extractos de los <strong>modelos compartidos</strong> al proveedor externo para construir vectores semánticos. No se envían documentos de empresas privadas.</span></label>
+              <div class="c12-actions">
+                <button type="button" id="c12-embed" class="outline">Generar siguiente lote de vectores (hasta 6)</button>
+              </div>
+              <p class="subtle">La generación se realiza por lotes controlados. Puedes repetirla hasta completar el índice. La búsqueda por palabras continúa operativa aunque no existan vectores.</p>
+              <form id="c12-search-form">
+                <label>Consulta de prueba (usa un ejemplo ficticio)
+                  <textarea id="c12-query" rows="2" minlength="3" maxlength="700" required placeholder="Por ejemplo: registramos los riesgos y su impacto en el proyecto"></textarea>
+                </label>
+                <label class="c12-checkbox"><input id="c12-query-embed" type="checkbox"><span>Autorizar enviar esta consulta ficticia al proveedor para búsqueda semántica</span></label>
+                <button type="submit">Buscar elementos relacionados</button>
+              </form>
+              <div id="c12-results" class="c12-items" aria-live="polite"></div>
+            </section>
+            <section class="c12-card">
+              <h3>4. Evaluación reproducible y revisión humana</h3>
+              <p>Ejecuta ejemplos ficticios y controles negativos. La herramienta registra aciertos, posición de recuperación, tiempo de consulta y juicios humanos independientes.</p>
+              <label class="c12-checkbox"><input id="c12-pilot-embed" type="checkbox"><span>Incluir búsqueda semántica de los casos ficticios (envío externo autorizado)</span></label>
+              <button id="c12-pilot-run" type="button">Ejecutar piloto sintético</button>
+              <div id="c12-pilot" class="c12-items" aria-live="polite"></div>
+              <p class="c12-caution">Los casos ficticios no sustituyen la evaluación con trabajadores de diferentes ocupaciones y dos evaluadores independientes. La precisión, los falsos positivos y la concordancia se informarán únicamente cuando existan etiquetas suficientes.</p>
+            </section>
+          </div>
+        </div>
+      </article>
+    </section>
+
     <section data-panel="modelo" class="hidden" role="tabpanel">
       <article class="card">
         <h2>Constructor manual de metodologías · v0.8.5</h2>
@@ -950,5 +1064,6 @@
 <script src="entrevistas.js?v=0.8.7-3" defer></script>
 <script src="beta.js?v=1.0.0-beta-3" defer></script>
 <script src="chat.js?v=1.0.0-beta-chat-2" defer></script>
+<script src="indice-inteligente.js?v=1.0.0-beta-2" defer></script>
 </body>
 </html>

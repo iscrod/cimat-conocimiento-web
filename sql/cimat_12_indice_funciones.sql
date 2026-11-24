@@ -124,7 +124,7 @@ AS $fn$
    CASE WHEN c.fts @@ q.t THEN ts_rank_cd(c.fts,q.t) ELSE 0 END::float8 as ft,
    extensions.similarity(left(c.nombre,450),left(p_consulta,450))::float8 as tr,
    CASE WHEN q.v IS NOT NULL AND c.embedding IS NOT NULL
-     THEN GREATEST(0.0,1-(c.embedding <=> q.v))::float8 ELSE NULL::float8 END as sim
+     THEN GREATEST(0.0,1-(c.embedding OPERATOR(extensions.<=>) q.v))::float8 ELSE NULL::float8 END as sim
  FROM public.cimat_12_catalogo c
  JOIN public.dominios_conocimiento d ON d.id=c.dominio_id
  CROSS JOIN q

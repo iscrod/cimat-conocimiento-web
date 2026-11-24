@@ -12,7 +12,7 @@
   rol:"Rol",entrada:"Entrada",salida:"Salida",excepcion:"Excepción",criterio:"Criterio"};
  const grades={posible:"Posible correspondencia",parcial:"Coincidencia parcial",
   insuficiente:"Información insuficiente",contradiccion:"Posible contradicción"};
- let userId="",sessions=[],banks=[],selected=null,turns=[],findings=[],reviews=[],busy=false;
+ let userId="",sessions=[],banks=[],selected=null,turns=[],findings=[],reviews=[],evaluations=[],criterionStates=[],busy=false;
 
  function session(){
   let v=null;
@@ -46,7 +46,7 @@
  }
  function option(v,t){const n=el("option",t);n.value=v;return n;}
  function reset(){
-  userId="";sessions=[];banks=[];selected=null;turns=[];findings=[];reviews=[];busy=false;
+  userId="";sessions=[];banks=[];selected=null;turns=[];findings=[];reviews=[];evaluations=[];criterionStates=[];busy=false;
   $("cchat-session").replaceChildren();
   $("cchat-newbank").replaceChildren();
   $("cchat-start-consent").checked=false;
@@ -92,17 +92,20 @@
  }
  async function loadTurnData(id){
   const eid=encodeURIComponent(id);
-  const [t,h,r]=await Promise.all([
+  const [t,h,r,ev,criteria]=await Promise.all([
    api("/rest/v1/cimat_11_dialogos?select=id,entrevista_id,mensaje_usuario,respuesta_ia,estado,hallazgos,coincidencias,creado_en,modelo&entrevista_id=eq."+
     eid+"&order=creado_en.asc,id.asc&limit=150"),
    api("/rest/v1/cimat_10_hallazgos?select=id,entrevista_id,dialogo_id,titulo,tipo,evidencia_literal,estado&entrevista_id=eq."+eid+"&limit=400"),
-   api("/rest/v1/cimat_11_revisiones?select=dialogo_id,elemento_id,estado,observacion,revisado_en&limit=300")
+   api("/rest/v1/cimat_11_revisiones?select=dialogo_id,elemento_id,estado,observacion,revisado_en&limit=300"),
+   api("/rest/v1/cimat_12_evaluaciones?select=id,entrevista_id,dialogo_id,catalogo_id,estado,observacion&entrevista_id=eq."+eid+"&limit=300"),
+   api("/rest/v1/cimat_12_criterios_evaluados?select=evaluacion_id,criterio_id,estado,fragmento,observacion&limit=500")
   ]);
-  if(!Array.isArray(t)||!Array.isArray(h)||!Array.isArray(r))
+  if(!Array.isArray(t)||!Array.isArray(h)||!Array.isArray(r)||!Array.isArray(ev)||!Array.isArray(criteria))
     throw Error("No se pudo cargar el historial.");
   turns=t;findings=h;
   const turnIds=new Set(t.map(x=>x.id));
   reviews=r.filter(x=>turnIds.has(x.dialogo_id));
+  evaluations=ev;criterionStates=criteria;
   render();
  }
  async function createInterview(){
@@ -123,7 +126,7 @@
   const s=sessions.find(x=>x.id===id)||null;
   selected=s;
   $("cchat-consent").checked=false;
-  turns=[];reviews=[];findings=[];
+  turns=[];reviews=[];findings=[];evaluations=[];criterionStates=[];
   $("cchat-thread").replaceChildren();
   $("cchat-compose").value="";
   if(!s){$("cchat-layout").classList.add("hidden");return;}
@@ -168,7 +171,7 @@
    const m=found[i];
    if(!m||!m.elemento_id)continue;
    const card=el("div",null,"cchat-match");
-   card.append(el("strong",(m.tipo==="producto"?"Producto de trabajo: ":"Tarea: ")+m.nombre));
+   card.append(el("strong",(m.tipo==="producto"?"Producto de trabajo":m.tipo==="practica"?"Práctica":m.tipo==="criterio"?"Criterio":m.tipo==="tarea"?"Tarea":m.tipo||"Elemento")+": "+m.nombre));
    card.append(el("p",m.modelo+
      (m.edicion?" · edición "+m.edicion:"")+
      (m.codigo?" · "+m.codigo:"")+
@@ -183,6 +186,47 @@
    const btn=el("button","Pedir aclaraciones sobre esta correspondencia","outline");
    btn.type="button";btn.dataset.clarify=turn.id+":"+i;
    card.append(btn);
+   const recorded=evaluations.find(e=>e.dialogo_id===turn.id&&e.catalogo_id===m.catalogo_id);
+   if(m.catalogo_id){
+    const register=el("button",recorded?"Correspondencia registrada":"Vincular evidencia al índice","outline");
+    register.type="button";register.dataset.indexRecord=turn.id+":"+i;register.disabled=!!recorded;
+    card.append(register);
+    if(recorded){
+     const section=el("div",null,"cchat-index-review");
+     section.append(el("p","Evaluación de criterios de este elemento (no constituye conformidad normativa).","cchat-muted"));
+     const selectStatus=el("select");selectStatus.dataset.evalStatus=recorded.id;
+     [["posible","Posible correspondencia"],["parcial","Correspondencia parcial"],
+      ["insuficiente","Información insuficiente"],["contradiccion","Contradicción por revisar"],
+      ["confirmado","Correspondencia confirmada manualmente"],["descartado","Descartada"]]
+      .forEach(([v,n])=>selectStatus.append(option(v,n)));
+     selectStatus.value=recorded.estado;
+     const update=el("button","Guardar estado","outline");update.type="button";
+     update.dataset.evalSave=recorded.id;section.append(selectStatus,update);
+     for(const criterion of Array.isArray(m.criterios_detalle)?m.criterios_detalle:[]){
+      const state=criterionStates.find(k=>k.evaluacion_id===recorded.id&&k.criterio_id===criterion.id);
+      const line=el("div",null,"cchat-criterion");
+      line.append(el("strong",criterion.nombre));
+      const grade=el("select");grade.dataset.criterionGrade=recorded.id+":"+criterion.id;
+      [["sin_evidencia","Sin evidencia"],["respaldado","Respaldado por relato"],
+       ["contradiccion","Posible contradicción"],["no_aplica","No aplicable"]]
+       .forEach(([v,n])=>grade.append(option(v,n)));
+      grade.value=state?.estado||"sin_evidencia";
+      const fragment=el("textarea");fragment.rows=2;fragment.maxLength=550;
+      fragment.placeholder="Fragmento exacto del relato que fundamenta el juicio";
+      fragment.value=state?.fragmento||"";
+      fragment.dataset.criterionQuote=recorded.id+":"+criterion.id;
+      const observation=el("input");observation.maxLength=1000;
+      observation.placeholder="Observación técnica (opcional)";
+      observation.value=state?.observacion||"";
+      observation.dataset.criterionNote=recorded.id+":"+criterion.id;
+      const saveCriterion=el("button","Guardar criterio","outline");
+      saveCriterion.type="button";saveCriterion.dataset.criterionSave=recorded.id+":"+criterion.id;
+      line.append(grade,fragment,observation,saveCriterion);
+      section.append(line);
+     }
+     card.append(section);
+    }
+   }
    const own=reviews.find(x=>x.dialogo_id===turn.id&&x.elemento_id===m.elemento_id);
    const select=el("select");
    select.setAttribute("aria-label","Evaluación humana de esta correspondencia");
@@ -291,6 +335,44 @@
   $("cchat-compose").focus();
   status("El mensaje se preparó para que decidas si deseas enviarlo. No se envía automáticamente.");
  }
+ async function registerIndexCandidate(value){
+  const {turn,match}=parseKey(value);
+  if(!match?.catalogo_id)throw Error("La coincidencia proviene de un catálogo anterior; consulta nuevamente el chat.");
+  const rows=await api("/rest/v1/cimat_12_evaluaciones?select=id","POST",{
+   entrevista_id:turn.entrevista_id,dialogo_id:turn.id,catalogo_id:match.catalogo_id,
+   cita:match.cita,estado:"posible",origen:"ia",
+   observacion:"Candidato de búsqueda; "+(match.justificacion||"Sin conclusión de conformidad.")
+  },"return=representation");
+  if(!Array.isArray(rows)||rows.length!==1)throw Error("No se confirmó la correspondencia.");
+  await loadTurnData(turn.entrevista_id);
+  status("Candidato vinculado a evidencia. Examina cada criterio por separado.");
+ }
+ async function saveIndexStatus(id){
+  const node=document.querySelector('select[data-eval-status="'+id+'"]');
+  if(!node)throw Error("No se encontró la evaluación.");
+  const rows=await api("/rest/v1/cimat_12_evaluaciones?id=eq."+encodeURIComponent(id)+"&select=id,estado",
+   "PATCH",{estado:node.value},"return=representation");
+  if(!Array.isArray(rows)||rows.length!==1)throw Error("No se confirmó la revisión.");
+  await loadTurnData(selected.id);
+  status("Estado de correspondencia actualizado por el revisor. No determina certificación.");
+ }
+ async function saveIndexCriterion(value){
+  const at=value.indexOf(":"),eId=value.slice(0,at),cId=value.slice(at+1);
+  const statusNode=document.querySelector('select[data-criterion-grade="'+value+'"]');
+  const quoteNode=document.querySelector('textarea[data-criterion-quote="'+value+'"]');
+  const noteNode=document.querySelector('input[data-criterion-note="'+value+'"]');
+  if(!statusNode||!quoteNode||!noteNode)throw Error("No se encontró el criterio seleccionado.");
+  const text=quoteNode.value.trim();
+  if(statusNode.value==="respaldado"&&text.length<8)
+   throw Error("Se requiere un fragmento literal del relato para registrar respaldo.");
+  const rows=await api("/rest/v1/cimat_12_criterios_evaluados?on_conflict=evaluacion_id,criterio_id&select=evaluacion_id,criterio_id",
+   "POST",{evaluacion_id:eId,criterio_id:cId,estado:statusNode.value,
+     fragmento:text,observacion:noteNode.value.trim()},
+   "resolution=merge-duplicates,return=representation");
+  if(!Array.isArray(rows)||rows.length!==1)throw Error("No se confirmó la evaluación del criterio.");
+  await loadTurnData(selected.id);
+  status("Criterio revisado con evidencia. Es una valoración humana provisional.");
+ }
  async function review(value){
   const {turn,idx,match}=parseKey(value);
   if(!match)throw Error("No se encontró la correspondencia.");
@@ -335,6 +417,12 @@
    if(save){action(()=>saveFinding(save.dataset.turn,Number(save.dataset.hyp)));return;}
    const question=e.target.closest("button[data-clarify]");
    if(question){try{clarify(question.dataset.clarify);}catch(err){status(err.message,true);}return;}
+   const attach=e.target.closest("button[data-index-record]");
+   if(attach){action(()=>registerIndexCandidate(attach.dataset.indexRecord));return;}
+   const indexSave=e.target.closest("button[data-eval-save]");
+   if(indexSave){action(()=>saveIndexStatus(indexSave.dataset.evalSave));return;}
+   const criterionSave=e.target.closest("button[data-criterion-save]");
+   if(criterionSave){action(()=>saveIndexCriterion(criterionSave.dataset.criterionSave));return;}
    const check=e.target.closest("button[data-review]");
    if(check)action(()=>review(check.dataset.review));
   });

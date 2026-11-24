@@ -1,0 +1,32 @@
+/* CIMAT 1.0.0-beta — laboratorio de conocimiento tácito */
+.c100-toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:16px 0}
+.c100-toolbar label{flex:1;min-width:270px;margin:0}
+.c100-lab{display:grid;gap:18px}
+.c100-box{border:1px solid #d9e5ee;background:#fbfdff;border-radius:12px;padding:19px}
+.c100-box h3{margin:0 0 10px;color:#23435d}
+.c100-box h4{margin:17px 0 8px}
+.c100-box label{margin:14px 0}
+.c100-box textarea{min-height:95px}
+.c100-box .c100-actions{display:flex;gap:8px;flex-wrap:wrap;margin:11px 0}
+.c100-box .c100-actions button{padding:8px 11px;font-size:12px}
+.c100-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:15px}
+.c100-items{display:grid;gap:10px;margin:13px 0}
+.c100-item{border:1px solid #d6e3ed;background:#fff;padding:14px;border-radius:10px;overflow-wrap:anywhere}
+.c100-item strong{font-size:14px;color:#183a54}
+.c100-item p{font-size:13px;margin:6px 0}
+.c100-item small{display:block;font-size:12px;color:#627588;margin:7px 0}
+.c100-item blockquote{border-left:3px solid #abc6d9;margin:9px 0;padding:5px 11px;color:#445c70;font-size:13px;white-space:pre-wrap}
+.c100-row{display:flex;gap:9px;align-items:start;justify-content:space-between;border-bottom:1px solid #e8eef4;padding:9px 0}
+.c100-row span,.c100-row strong{line-height:1.4;min-width:0}
+.c100-row button{padding:7px 9px;font-size:11px;flex-shrink:0}
+.c100-state{padding:4px 7px;background:#edf4fa;color:#28516f;border-radius:6px;font-size:11px}
+.c100-source-text{background:#f0f7fc;padding:13px;border-radius:8px;overflow-wrap:anywhere;font-size:13px;color:#31536b;white-space:pre-wrap}
+.c100-relation{border-bottom:1px solid #e7edf2;padding:10px 0;margin:0;font-size:13px}
+.c100-disclaimer{border-left:3px solid #a97842;padding:8px 14px;background:#fff8ec;color:#6b5336;font-size:13px;border-radius:7px}
+.c100-diagram{height:480px;min-height:360px;border:1px solid #ccdce9;background:linear-gradient(#fbfdff,#f0f6fa);border-radius:10px;padding:8px;overflow:hidden;touch-action:none}
+.c100-diagram .subtle{padding:14px}
+#c100-status{padding:12px 14px;border-radius:8px;background:#edf6fa;color:#244b62;margin:12px 0;overflow-wrap:anywhere}
+#c100-status.error{background:#fff2f2;border:1px solid #e8b9b9;color:#9c3131}
+#c100-summary{font-weight:600;color:#275a70}
+#c100-ai-preview .c100-item{border-color:#e2d5b4;background:#fffdf7}
+@media(max-width:800px){.c100-grid{grid-template-columns:1fr}.c100-toolbar label{min-width:100%}.c100-row{flex-direction:column}.c100-row button{align-self:flex-start}}

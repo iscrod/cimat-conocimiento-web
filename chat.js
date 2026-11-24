@@ -48,6 +48,8 @@
  function reset(){
   userId="";sessions=[];banks=[];selected=null;turns=[];findings=[];reviews=[];busy=false;
   $("cchat-session").replaceChildren();
+  $("cchat-newbank").replaceChildren();
+  $("cchat-start-consent").checked=false;
   $("cchat-thread").replaceChildren();
   $("cchat-consent").checked=false;
   $("cchat-compose").value="";
@@ -71,6 +73,10 @@
   const pick=$("cchat-session");pick.replaceChildren(option("","Elige una entrevista propia"));
   sessions.forEach(item=>pick.append(option(item.id,title(item))));
   if(sessions.some(item=>item.id===current))pick.value=current;
+  const bank=$("cchat-newbank"),currentBank=bank.value;
+  bank.replaceChildren(option("","Selecciona un cuestionario publicado"));
+  banks.forEach(item=>bank.append(option(item.id,item.titulo+" · v"+item.version)));
+  if(banks.some(item=>item.id===currentBank))bank.value=currentBank;
   $("cchat-empty").classList.toggle("hidden",sessions.length!==0);
  }
  async function init(){
@@ -98,6 +104,20 @@
   const turnIds=new Set(t.map(x=>x.id));
   reviews=r.filter(x=>turnIds.has(x.dialogo_id));
   render();
+ }
+ async function createInterview(){
+  const bankId=$("cchat-newbank").value,approved=$("cchat-start-consent").checked;
+  if(!approved)throw Error("Lee y acepta voluntariamente las condiciones de la entrevista antes de continuar.");
+  if(!banks.some(b=>b.id===bankId))throw Error("Selecciona un cuestionario genérico publicado.");
+  const rows=await api("/rest/v1/cimat_087_entrevistas?select=id,cuestionario_id,estado,actualizado_en",
+   "POST",{cuestionario_id:bankId,consentimiento_confirmado:true,consentimiento_version:"cimat-0.8.7-1"},
+   "return=representation");
+  if(!Array.isArray(rows)||rows.length!==1)throw Error("El servidor no confirmó la creación de la sesión.");
+  $("cchat-start-consent").checked=false;
+  await loadLists();
+  $("cchat-session").value=rows[0].id;
+  await selectInterview(rows[0].id);
+  status("Sesión de entrevista creada. Puedes comenzar directamente en el chat, sin responder primero las doce preguntas del cuestionario.");
  }
  async function selectInterview(id){
   const s=sessions.find(x=>x.id===id)||null;
@@ -297,6 +317,7 @@
  function bind(){
   document.querySelector('[data-view="chat"]')?.addEventListener("click",init);
   $("cchat-session").addEventListener("change",e=>action(()=>selectInterview(e.target.value)));
+  $("cchat-start-form").addEventListener("submit",e=>{e.preventDefault();action(createInterview);});
   $("cchat-refresh").addEventListener("click",()=>action(async()=>{
    const old=selected?.id;await loadLists();
    if(old&&sessions.some(x=>x.id===old))await selectInterview(old);

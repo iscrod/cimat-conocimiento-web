@@ -59,7 +59,12 @@ async function embedSearch(text:string,secret:string):Promise<string|null>{
 async function getCatalog(db:any,uid:string,userText:string,secret:string):
  Promise<{entries:CatalogEntry[];domains:number;total:number}>{
  if(!INDICIOS.test(userText))return {entries:[],domains:0,total:0};
- const embedding=await embedSearch(userText,secret);
+ // No solicitar embeddings cuando todavía no hay vectores indexados.
+ // Así evitamos procesamiento externo inútil durante la etapa textual del piloto.
+ const {count:vectorCount}=await db.from("cimat_12_catalogo")
+   .select("id",{head:true,count:"exact"}).eq("activo",true)
+   .not("embedding","is",null).limit(1);
+ const embedding=(vectorCount||0)>0?await embedSearch(userText,secret):null;
  const {data,error}=await db.rpc("cimat_12_buscar_servicio",{
    p_consulta:userText.slice(0,450),p_usuario:uid,p_embedding:embedding,p_limite:26
  });

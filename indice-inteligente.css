@@ -1,0 +1,23 @@
+/* CIMAT 1.0.0-beta.2 — Índice Inteligente, panel administrativo */
+.c12-layout{display:grid;gap:16px;margin-top:16px}
+.c12-card{background:#fbfdff;border:1px solid #d4e4ef;border-radius:12px;padding:17px}
+.c12-card h3{margin:0 0 11px;color:#173d55}
+.c12-card p{line-height:1.55}
+.c12-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.c12-card label{display:block;margin:10px 0}
+.c12-card label input,.c12-card label textarea,.c12-card label select{max-width:100%}
+.c12-actions{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}
+.c12-items{display:grid;gap:9px;margin:12px 0}
+.c12-item{border:1px solid #dbe6ed;padding:13px;border-radius:10px;background:white;overflow-wrap:anywhere}
+.c12-item strong{color:#1a4861}
+.c12-item small{display:block;color:#4b6a7d}
+.c12-item p{font-size:12px;margin:7px 0}
+.c12-judgment{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:8px 0;border-top:1px solid #eef2f7}
+.c12-judgment span{flex:1 1 250px;font-size:13px}
+.c12-judgment select{max-width:170px}
+#c12-status{background:#f0f7fb;color:#1a435b;border-radius:8px;padding:12px;margin:12px 0;overflow-wrap:anywhere}
+#c12-status.error{background:#fff1f0;color:#99332c;border:1px solid #f0c1b8}
+.c12-caution{border-left:4px solid #d9a24d;background:#fff9ee;padding:12px;border-radius:7px;font-size:13px}
+.c12-checkbox{display:flex!important;gap:9px;align-items:flex-start}
+.c12-checkbox input{width:18px!important;flex-shrink:0;margin-top:3px}
+@media(max-width:760px){.c12-grid{grid-template-columns:1fr}.c12-card{padding:12px}}

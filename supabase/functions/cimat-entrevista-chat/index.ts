@@ -84,6 +84,48 @@ async function getCatalog(db:any,uid:string,userText:string,secret:string):
  });
  return {entries:elements,domains:new Set(elements.map(e=>e.dominio_id)).size,total:elements.length};
 }
+// Gemini puede retirar modelos o restringirlos por cuenta sin modificar la clave.
+// Ante un 404 se busca una alternativa con generateContent. Nunca se envían
+// prompts, credenciales ni errores privados del proveedor a la interfaz.
+function normalizeGeminiModel(value:string):string {
+ const clean=value.trim().replace(/^models\//,"");
+ return /^gemini-[a-z0-9.-]{3,90}$/.test(clean)?clean:"gemini-3.8-flash";
+}
+async function discoverGeminiFallback(apiKey:string, excluded:string):Promise<string|null> {
+ const available=new Set<string>();
+ let page="";
+ for(let i=0;i<3;i++){
+  const url="https://generativelanguage.googleapis.com/v1beta/models?pageSize=100"+
+    (page?"&pageToken="+encodeURIComponent(page):"");
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),8000);
+  let data:any;
+  try{
+   const res=await fetch(url,{headers:{"x-goog-api-key":apiKey},signal:controller.signal});
+   if(!res.ok)return null;
+   data=await res.json();
+  }catch(_){return null;}
+  finally{clearTimeout(timer);}
+  for(const raw of Array.isArray(data?.models)?data.models:[]){
+   const id=String(raw?.name||"").replace(/^models\//,"");
+   const methods=Array.isArray(raw?.supportedGenerationMethods)?raw.supportedGenerationMethods:[];
+   if(id!==excluded && /^gemini-3[\w.-]+$/.test(id) &&
+      !/(image|audio|live|tts|embedding|robotics|computer-use|vision|preview)/i.test(id) &&
+      methods.includes("generateContent"))available.add(id);
+  }
+  page=typeof data?.nextPageToken==="string"?data.nextPageToken:"";
+  if(!page)break;
+ }
+ const preferred=[
+  "gemini-3.8-flash","gemini-3.6-flash","gemini-3.5-flash-lite",
+  "gemini-3.1-flash-lite","gemini-3.1-flash","gemini-3-flash"
+ ];
+ for(const id of preferred)if(available.has(id))return id;
+ return [...available].sort((a,b)=>{
+   const rank=(x:string)=>x.includes("flash-lite")?0:x.includes("flash")?1:2;
+   return rank(a)-rank(b) || b.localeCompare(a);
+ })[0]||null;
+}
 function systemPrompt():string {
  return [
  "Eres CIMAT, entrevistador científico de conocimiento tácito de procesos de trabajo.",
@@ -143,7 +185,7 @@ Deno.serve(async(req:Request)=>{
  if(!interview||interview.estado!=="en_curso"||!interview.consentimiento_confirmado)
    return output(403,"La entrevista debe pertenecer a tu cuenta y permanecer abierta.");
  const geminiKey=Deno.env.get("CIMAT_GEMINI_API_KEY")||"";
- const model=Deno.env.get("CIMAT_GEMINI_MODEL")||"gemini-2.5-flash";
+ const model=normalizeGeminiModel(Deno.env.get("CIMAT_GEMINI_MODEL")||"gemini-3.8-flash");
  if(!geminiKey)return output(503,"El chat de IA aún no está configurado. Falta la clave del proveedor en Supabase.");
  const {data:prior,error:priorErr}=await db.from("cimat_11_dialogos")
    .select("id,usuario_id,estado,respuesta_ia,hallazgos,coincidencias")
@@ -216,26 +258,47 @@ Deno.serve(async(req:Request)=>{
    return output(status,message);
  }
  try{
-   const controller=new AbortController();
-   const timer=setTimeout(()=>controller.abort(),45000);
-   let provider:Response;
-   try{
-     provider=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+
-       encodeURIComponent(model)+":generateContent",{
-       method:"POST",signal:controller.signal,
-       headers:{"Content-Type":"application/json","x-goog-api-key":geminiKey},
-       body:JSON.stringify({
-         systemInstruction:{parts:[{text:systemPrompt()}]},
-         contents:[{role:"user",parts:[{text:prompt}]}],
-         generationConfig:{temperature:0.3,responseMimeType:"application/json",maxOutputTokens:3600}
-       })
-     });
-   }finally{clearTimeout(timer);}
+   async function callModel(target:string):Promise<Response>{
+     const controller=new AbortController();
+     const timer=setTimeout(()=>controller.abort(),45000);
+     try{
+       return await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+
+         encodeURIComponent(target)+":generateContent",{
+         method:"POST",signal:controller.signal,
+         headers:{"Content-Type":"application/json","x-goog-api-key":geminiKey},
+         body:JSON.stringify({
+           systemInstruction:{parts:[{text:systemPrompt()}]},
+           contents:[{role:"user",parts:[{text:prompt}]}],
+           generationConfig:{temperature:0.3,responseMimeType:"application/json",maxOutputTokens:3600}
+         })
+       });
+     }finally{clearTimeout(timer);}
+   }
+   let actualModel=model;
+   let provider=await callModel(actualModel);
+   if(provider.status===404){
+     // Algunas cuentas pueden listar Gemini 2.5 pero rechazarlo al generar.
+     const alternative=await discoverGeminiFallback(geminiKey,actualModel);
+     if(alternative){
+       console.info("CIMAT chat: modelo no disponible; intentando alternativa",{
+         anterior:actualModel,alternativo:alternative
+       });
+       actualModel=alternative;
+       provider=await callModel(actualModel);
+     }
+   }
    if(!provider.ok){
+     // Registrar solamente estado y modelo, nunca texto de entrevista ni API key.
+     console.warn("CIMAT chat: rechazo del proveedor",{
+       status:provider.status,modelo:actualModel
+     });
      if(provider.status===429)return await fail("El proveedor alcanzó su límite de solicitudes.",429);
      if(provider.status===401||provider.status===403)
-       return await fail("La clave configurada del proveedor fue rechazada.",503);
-     if(provider.status===404)return await fail("El modelo de IA no está disponible.",503);
+       return await fail("La credencial o el acceso del proyecto al proveedor de IA fue rechazado.",503);
+     if(provider.status===404)
+       return await fail("No hay un modelo de IA compatible disponible para esta cuenta. Revisa la configuración del proveedor.",503);
+     if(provider.status===400)
+       return await fail("El proveedor rechazó la configuración de generación para el modelo seleccionado.",502);
      return await fail("El proveedor no pudo procesar la conversación (HTTP "+provider.status+").",502);
    }
    const payload=await provider.json();
@@ -277,6 +340,7 @@ Deno.serve(async(req:Request)=>{
    }
    const {data:done,error:doneErr}=await db.from("cimat_11_dialogos").update({
       estado:"completado",respuesta_ia:response,hallazgos:suggestions,coincidencias:comparisons,
+       modelo:actualModel,
       actualizado_en:new Date().toISOString()
     }).eq("id",turnId).eq("usuario_id",uid)
     .select("id,mensaje_usuario,respuesta_ia,estado,hallazgos,coincidencias,creado_en,modelo")

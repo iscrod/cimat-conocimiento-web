@@ -481,6 +481,18 @@
         <p class="subtle">Versión académica de prueba. Utiliza datos ficticios, sin nombres de terceros, secretos ni documentos confidenciales. Las conversaciones se almacenan de forma privada en Supabase; se envían al proveedor al generar cada respuesta de IA.</p>
         <p id="cchat-status" role="status" aria-live="polite">Abre esta sección para cargar tus entrevistas privadas.</p>
         <div id="cchat-controls" class="hidden">
+          <form id="cchat-start-form" class="cchat-intro" style="margin:16px 0">
+            <h3>Comenzar una nueva entrevista conversacional</h3>
+            <p>Puedes iniciar el chat directamente, sin responder antes todas las preguntas del cuestionario. La versión publicada se registra para mantener la trazabilidad del instrumento.</p>
+            <label>Cuestionario genérico de referencia
+              <select id="cchat-newbank" required><option value="">Selecciona un cuestionario publicado</option></select>
+            </label>
+            <label class="cchat-consent">
+              <input id="cchat-start-consent" type="checkbox" required>
+              <span>Acepto voluntariamente crear una entrevista académica de prueba, guardar los mensajes que introduzca y poder retirar el consentimiento eliminando la sesión desde «Entrevistas». No incluiré información real de terceros ni datos confidenciales. El envío a la IA requerirá además mi autorización en cada mensaje.</span>
+            </label>
+            <button id="cchat-start" type="submit" class="outline">Crear entrevista para conversar</button>
+          </form>
           <div class="cchat-toolbar">
             <label>Entrevista del trabajador
               <select id="cchat-session"><option value="">Selecciona una entrevista propia</option></select>
@@ -937,6 +949,6 @@
  <script src="cuestionario.js?v=0.8.6-2" defer></script>
 <script src="entrevistas.js?v=0.8.7-3" defer></script>
 <script src="beta.js?v=1.0.0-beta-3" defer></script>
-<script src="chat.js?v=1.0.0-beta-chat-1" defer></script>
+<script src="chat.js?v=1.0.0-beta-chat-2" defer></script>
 </body>
 </html>

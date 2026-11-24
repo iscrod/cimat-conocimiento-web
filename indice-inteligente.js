@@ -187,6 +187,24 @@ function bind(){
     autorizacion_externa:$("c12-query-embed").checked,limite:15});
   showMatches(r.candidatos);message("Consulta completada en modo "+r.modo+".");
  });});
+ $("c12-review-summary").addEventListener("click",()=>act(async()=>{
+  const data=await api({accion:"resumen_revision"});
+  const target=$("c12-review-metrics");target.replaceChildren();
+  if(!data.ultima_ejecucion){target.textContent=data.mensaje;return;}
+  const fmt=v=>typeof v==="number"?v.toFixed(3):"Pendiente";
+  target.append(elem("p","Última ejecución: "+data.ultima_ejecucion.casos+
+   " casos · Top 1: "+data.ultima_ejecucion.aciertos_top1+
+   " · Top 5: "+data.ultima_ejecucion.aciertos_top5+
+   " · MRR: "+fmt(data.ultima_ejecucion.mrr)));
+  target.append(elem("p","Candidatos anotables: "+data.recuperaciones+
+   " · Pares con dos revisores: "+data.pares_doble_revision+
+   " · Cobertura: "+fmt(data.cobertura)));
+  target.append(elem("p","Acuerdo observado: "+fmt(data.acuerdo_observado)+
+   " · Kappa de Cohen: "+fmt(data.kappa)+
+   " · Precisión en candidatos revisados: "+fmt(data.precision_candidatos_revisados)));
+  target.append(elem("p",data.nota,"subtle"));
+  message("Revisión de métricas efectuada; no se atribuyen resultados inexistentes.");
+ }));
  $("c12-pilot-run").addEventListener("click",()=>act(async()=>{
   const r=await api({accion:"piloto",autorizacion_externa:$("c12-pilot-embed").checked});
   displayPilot(r);message(r.mensaje);

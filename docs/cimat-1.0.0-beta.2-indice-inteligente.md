@@ -32,7 +32,7 @@ Ampliar CIMAT sin modificar las tablas aprobadas de Biblioteca, constructor de m
 - Edge Function \`cimat-indice-inteligente\` con autorización del administrador para consultar, reconstruir y, **solo con consentimiento separado**, generar embeddings de referencias compartidas.
 - Si aún no se han generado embeddings o no hay clave segura del proveedor, la búsqueda textual continúa funcionando. **A 24/11/2026 hay 0 de 57 embeddings generados**; por lo tanto, la búsqueda semántica vectorial queda preparada, pero su rendimiento todavía no está verificado.
 - Se redujo el procesamiento al omitir cálculos vectoriales durante el chat cuando no hay vectores disponibles.
-- Umbral textual conservador 0.075, ajustado en una prueba sintética de ocho casos. Es provisional y debe someterse a prueba con un corpus independiente; no debe presentarse como umbral estadísticamente validado.
+- Umbral textual conservador: en la prueba inicial se utilizó 0.075; la configuración desplegada posteriormente es 0.09 para búsqueda textual y 0.54 cuando existe similitud vectorial. Los resultados sintéticos se mantuvieron en 6/6 Top-5 y 0/2 controles negativos con candidatos. Es provisional y debe someterse a prueba con un corpus independiente; no debe presentarse como umbral estadísticamente validado.
 
 ### 4. Integración con entrevistador conversacional
 

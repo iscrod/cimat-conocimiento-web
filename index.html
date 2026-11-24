@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="cuestionario.css?v=0.8.6-1">
   <link rel="stylesheet" href="entrevistas.css?v=0.8.7-1">
   <link rel="stylesheet" href="beta.css?v=1.0.0-beta-1">
+  <link rel="stylesheet" href="chat.css?v=1.0.0-beta-chat-1">
 </head>
 <body>
 <main class="shell">
@@ -64,6 +65,7 @@
       <button type="button" class="tab" data-view="modelo" role="tab" aria-selected="false">Modelo y diagramas</button>
       <button type="button" class="tab" data-view="cuestionario" role="tab" aria-selected="false">Cuestionario genérico</button>
       <button type="button" class="tab" data-view="entrevistas" role="tab" aria-selected="false">Entrevistas</button>
+      <button type="button" class="tab" data-view="chat" role="tab" aria-selected="false">Entrevista con IA</button>
       <button type="button" class="tab" data-view="beta" role="tab" aria-selected="false">Laboratorio beta</button>
     </nav>
 
@@ -467,6 +469,55 @@
 
 
     <!-- CIMAT 1.0.0-beta: elicitación de conocimiento independiente de normas -->
+
+    <!-- CIMAT: entrevista conversacional y hallazgos vinculados a evidencia. -->
+    <section data-panel="chat" class="hidden" role="tabpanel">
+      <div class="section-heading">
+        <h2>Entrevista conversacional con IA · CIMAT 1.0.0-beta</h2>
+        <p>Conversa naturalmente sobre cómo realizas tu trabajo. La IA hará preguntas adaptadas a tu relato, buscará conocimiento experiencial y, cuando haya información suficiente, sugerirá posibles correspondencias con los modelos registrados.</p>
+      </div>
+      <article class="card">
+        <p class="cchat-intro"><strong>Primero el proceso real, después los modelos.</strong> El entrevistador no parte de tareas de una norma. Los productos y tareas similares encontrados en la Biblioteca se muestran como <strong>posibles correspondencias</strong>; no como cumplimiento verificado. El análisis utiliza Gemini, un proveedor externo de IA, y requiere autorización específica.</p>
+        <p class="subtle">Versión académica de prueba. Utiliza datos ficticios, sin nombres de terceros, secretos ni documentos confidenciales. Las conversaciones se almacenan de forma privada en Supabase; se envían al proveedor al generar cada respuesta de IA.</p>
+        <p id="cchat-status" role="status" aria-live="polite">Abre esta sección para cargar tus entrevistas privadas.</p>
+        <div id="cchat-controls" class="hidden">
+          <div class="cchat-toolbar">
+            <label>Entrevista del trabajador
+              <select id="cchat-session"><option value="">Selecciona una entrevista propia</option></select>
+            </label>
+            <button id="cchat-refresh" type="button" class="outline">Actualizar conversaciones</button>
+          </div>
+          <p id="cchat-empty" class="subtle hidden">Todavía no tienes una sesión. Crea primero una entrevista en la pestaña «Entrevistas» y vuelve aquí.</p>
+          <div id="cchat-layout" class="cchat-shell hidden">
+            <div>
+              <h3 id="cchat-head">Entrevista conversacional</h3>
+              <p class="subtle">Puedes continuar el diálogo en otra sesión. Para cada respuesta de IA, guarda primero tu mensaje; la conversación se recupera del servidor.</p>
+              <div id="cchat-thread" class="cchat-thread" role="log" aria-label="Conversación con el entrevistador" aria-live="polite"></div>
+              <form id="cchat-form" class="cchat-compose">
+                <label for="cchat-compose">Tu mensaje</label>
+                <textarea id="cchat-compose" rows="4" minlength="2" maxlength="4000" placeholder="Describe lo que haces, cómo tomas decisiones, qué produces y qué sucede cuando algo cambia."></textarea>
+                <label class="cchat-consent">
+                  <input id="cchat-consent" type="checkbox">
+                  <span>Autorizo voluntariamente enviar este mensaje, las respuestas previas pertinentes y la información de referencia de modelos al proveedor externo de IA para generar una respuesta y posibles correspondencias. Reconozco que este es un prototipo académico y que puedo dejar de usar el chat en cualquier momento.</span>
+                </label>
+                <div class="cchat-footer">
+                  <span id="cchat-count" class="subtle">0 intervenciones registradas</span>
+                  <button id="cchat-send" type="submit" disabled>Enviar y continuar la entrevista</button>
+                </div>
+                <p class="subtle">Ctrl + Enter para enviar. La casilla se desmarca después de cada turno; los mensajes ya enviados y sus análisis se conservan hasta que elimines la entrevista.</p>
+                <p id="cchat-readonly" class="subtle hidden">La entrevista está finalizada. Puedes revisar el diálogo, pero para seguir conversando debes utilizar una entrevista abierta.</p>
+              </form>
+            </div>
+          </div>
+        </div>
+      </article>
+      <article class="card">
+        <h3>Cómo interpretar las coincidencias</h3>
+        <p>Al reconocer posibles productos de trabajo o tareas, CIMAT puede mostrar la norma o metodología cargada, su edición, la evidencia textual del trabajador, las características registradas y lo que falta comprobar. También puedes pedir al chat que haga preguntas de aclaración.</p>
+        <p><strong>Importante:</strong> una correspondencia aparente no demuestra conformidad. La confirmación o el rechazo del hallazgo se realiza en «Laboratorio beta», y la revisión de la coincidencia se registra por separado. Un dictamen formal requerirá evaluación especializada y la versión oficial de la referencia.</p>
+      </article>
+    </section>
+
     <section data-panel="beta" class="hidden" role="tabpanel">
       <div class="section-heading">
         <h2>Laboratorio de conocimiento tácito · CIMAT 1.0.0-beta</h2>
@@ -886,5 +937,6 @@
  <script src="cuestionario.js?v=0.8.6-2" defer></script>
 <script src="entrevistas.js?v=0.8.7-3" defer></script>
 <script src="beta.js?v=1.0.0-beta-3" defer></script>
+<script src="chat.js?v=1.0.0-beta-chat-1" defer></script>
 </body>
 </html>

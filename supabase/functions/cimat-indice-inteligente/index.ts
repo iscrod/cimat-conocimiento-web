@@ -160,7 +160,9 @@ Deno.serve(async(req:Request)=>{
    const allowSemantic=body.autorizacion_externa===true;
    const {data:cases,error:caseError}=await service.from("cimat_12_casos_piloto").select("*").limit(30);
    if(caseError)return send(500,{mensaje:caseError.message});
-   const examples:any[]=[];let hits1=0,hits5=0,reciprocal=0,ms=0,mode="textual";
+   const examples:any[]=[];let hits1=0,hits5=0,reciprocal=0,ms=0,mode="textual",negAlerts=0;
+   const positives=(cases||[]).filter((x:any)=>x.esperado_origen_id!==null).length;
+   const negatives=(cases||[]).length-positives;
    for(const item of cases||[]){
     let vector:string|null=null;
     if(allowSemantic){try{vector=(await embedding(item.consulta,"RETRIEVAL_QUERY")).vector;mode="hibrida";}catch{}}
@@ -171,23 +173,29 @@ Deno.serve(async(req:Request)=>{
     if(error)return send(500,{mensaje:"No se completó el piloto: "+error.message});
     const ranked=found||[];
     const i=ranked.findIndex((x:any)=>x.origen_id===item.esperado_origen_id&&x.origen_tipo===item.esperado_origen_tipo);
-    if(i===0)hits1++;
-    if(i>=0&&i<5)hits5++;
-    if(i>=0)reciprocal+=1/(i+1);
-    examples.push({caso:item.titulo,esperado:item.esperado_origen_tipo,
-      puesto:item.ocupacion,rango:i<0?null:i+1,top3:ranked.slice(0,3).map((x:any)=>({id:x.catalogo_id,nombre:x.nombre,tipo:x.origen_tipo,puntaje:x.puntaje}))});
+    const negative=item.esperado_origen_id===null;
+    if(negative){if(ranked.length>0)negAlerts++;}
+    else{
+     if(i===0)hits1++;
+     if(i>=0&&i<5)hits5++;
+     if(i>=0)reciprocal+=1/(i+1);
+    }
+    examples.push({caso_id:item.id,caso:item.titulo,esperado:item.esperado_origen_tipo,
+      puesto:item.ocupacion,negativo:negative,rango:i<0?null:i+1,top3:ranked.slice(0,3).map((x:any)=>({id:x.catalogo_id,nombre:x.nombre,tipo:x.origen_tipo,puntaje:x.puntaje}))});
    }
    const total=(cases||[]).length;
    if(!total)return send(422,{mensaje:"No se han definido casos ficticios de prueba."});
    const {error:logError}=await service.from("cimat_12_resultados_piloto").insert({
     configuracion:mode,casos:total,aciertos_top1:hits1,aciertos_top5:hits5,
     falsos_positivos_top5:null,precision_top5:null,recall_top5:null,
-    mrr:Number((reciprocal/total).toFixed(4)),tiempo_medio_ms:ms/total,
-    notas:"Casos sintéticos con una referencia positiva conocida. Sin juicios negativos exhaustivos: precisión, recall general y falsos positivos no son estimables."
+    mrr:positives?Number((reciprocal/positives).toFixed(4)):null,tiempo_medio_ms:ms/total,
+    notas:"Positivos: "+positives+"; controles negativos: "+negatives+"; alertas en controles: "+negAlerts+". Una referencia positiva conocida por caso positivo; no se estima precisión global ni falsos positivos reales."
    });
    if(logError)return send(500,{mensaje:"No se guardó la ejecución: "+logError.message});
    return send(200,{mensaje:"Piloto sintético ejecutado. NO constituye validación científica con personas.",
-     casos:total,aciertos_top1:hits1,aciertos_top5:hits5,mrr:reciprocal/total,
+     casos:total,positivos:positives,controles_negativos:negatives,
+     aciertos_top1:hits1,aciertos_top5:hits5,alertas_controles_negativos:negAlerts,
+     mrr:positives?reciprocal/positives:null,
      latencia_media_ms:ms/total,modo:mode,detalles:examples,
      faltante:"Etiquetado experto de relevancia y evaluación con trabajadores reales."});
   }

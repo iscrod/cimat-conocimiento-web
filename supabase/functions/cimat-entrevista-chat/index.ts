@@ -160,6 +160,10 @@ Deno.serve(async(req:Request)=>{
   .eq("entrevista_id",interviewId).eq("usuario_id",uid)
   .eq("estado","completado").order("creado_en",{ascending:false}).limit(12);
  if(histErr)return output(500,"No se pudo cargar el historial.");
+ const {count:allTurns,error:countErr}=await db.from("cimat_11_dialogos")
+   .select("id",{head:true,count:"exact"}).eq("entrevista_id",interviewId).eq("usuario_id",uid);
+ if(countErr)return output(500,"No fue posible verificar el tamaño de la conversación.");
+ if((allTurns||0)>=120)return output(429,"Esta entrevista alcanzó el límite de 120 turnos de la beta. Inicia otra sesión si necesitas continuar.");
  const old=[...(history||[])].reverse();
  if(old.length && old.length>=12){
    // Se conserva todo en Supabase. Solo se reduce el contexto enviado al modelo.
@@ -192,6 +196,12 @@ Deno.serve(async(req:Request)=>{
   advertencia:"Las entradas del catálogo son metadatos registrados, no demostración de conformidad"
  });
  if(prompt.length>68000)return output(413,"La entrevista excede el límite de contexto de esta prueba.");
+ // Recuperación de turnos interrumpidos: la IA tiene un límite de 45 s;
+ // tras 3 min sin respuesta se cierra el bloqueo sin borrar el relato.
+ await db.from("cimat_11_dialogos").update({
+    estado:"error",actualizado_en:new Date().toISOString()
+  }).eq("entrevista_id",interviewId).eq("usuario_id",uid).eq("estado","procesando")
+    .lt("creado_en",new Date(Date.now()-180000).toISOString());
  const {data:created,error:createErr}=await db.from("cimat_11_dialogos")
   .insert({id:turnId,entrevista_id:interviewId,usuario_id:uid,mensaje_usuario:msg,
     consentimiento_externo:true,consentimiento_version:"cimat-chat-1",

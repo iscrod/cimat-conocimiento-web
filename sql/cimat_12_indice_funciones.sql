@@ -53,11 +53,11 @@ BEGIN
  SET nombre=EXCLUDED.nombre,descripcion=EXCLUDED.descripcion,codigo=EXCLUDED.codigo,
   documento_id=EXCLUDED.documento_id,pagina=EXCLUDED.pagina,naturaleza=EXCLUDED.naturaleza,
   texto_busqueda=EXCLUDED.texto_busqueda,
-  embedding=CASE WHEN public.cimat_12_catalogo.huella=EXCLUDED.huella
+  embedding=CASE WHEN (public.cimat_12_catalogo.huella=EXCLUDED.huella AND public.cimat_12_catalogo.texto_busqueda=EXCLUDED.texto_busqueda)
        THEN public.cimat_12_catalogo.embedding ELSE NULL END,
-  modelo_embedding=CASE WHEN public.cimat_12_catalogo.huella=EXCLUDED.huella
+  modelo_embedding=CASE WHEN (public.cimat_12_catalogo.huella=EXCLUDED.huella AND public.cimat_12_catalogo.texto_busqueda=EXCLUDED.texto_busqueda)
        THEN public.cimat_12_catalogo.modelo_embedding ELSE NULL END,
-  embedding_actualizado=CASE WHEN public.cimat_12_catalogo.huella=EXCLUDED.huella
+  embedding_actualizado=CASE WHEN (public.cimat_12_catalogo.huella=EXCLUDED.huella AND public.cimat_12_catalogo.texto_busqueda=EXCLUDED.texto_busqueda)
        THEN public.cimat_12_catalogo.embedding_actualizado ELSE NULL END,
   huella=EXCLUDED.huella,indexado_en=EXCLUDED.indexado_en,activo=true;
  UPDATE public.cimat_12_catalogo SET activo=false,embedding=NULL,modelo_embedding=NULL
@@ -148,7 +148,7 @@ AS $fn$
      WHERE (l.origen_id=s.id OR l.destino_id=s.id) AND related.id<>s.id AND related.activo
    ) AS relaciones
  FROM scored s
- WHERE s.ranking>=CASE WHEN s.sim IS NULL THEN 0.015 ELSE 0.22 END
+ WHERE s.ranking>=CASE WHEN s.sim IS NULL THEN 0.09 ELSE 0.54 END
  ORDER BY s.ranking DESC,s.nombre
  LIMIT LEAST(GREATEST(p_limite,1),30);
 $fn$;

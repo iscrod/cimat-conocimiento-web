@@ -8,12 +8,13 @@
   <link rel="stylesheet" href="styles.css?v=0.8.5-4">
   <link rel="stylesheet" href="cuestionario.css?v=0.8.6-1">
   <link rel="stylesheet" href="entrevistas.css?v=0.8.7-1">
+  <link rel="stylesheet" href="beta.css?v=1.0.0-beta-1">
 </head>
 <body>
 <main class="shell">
   <header>
     <div>
-      <span class="tag">PROTOTIPO ACADÉMICO · V0.8.7</span>
+      <span class="tag">PROTOTIPO ACADÉMICO · V1.0.0-BETA</span>
       <h1>Plataforma de extracción de conocimiento</h1>
       <p>Extracción de conocimiento tácito organizacional · modelos de referencia opcionales</p>
     </div>
@@ -63,6 +64,7 @@
       <button type="button" class="tab" data-view="modelo" role="tab" aria-selected="false">Modelo y diagramas</button>
       <button type="button" class="tab" data-view="cuestionario" role="tab" aria-selected="false">Cuestionario genérico</button>
       <button type="button" class="tab" data-view="entrevistas" role="tab" aria-selected="false">Entrevistas</button>
+      <button type="button" class="tab" data-view="beta" role="tab" aria-selected="false">Laboratorio beta</button>
     </nav>
 
     <section data-panel="resumen" role="tabpanel">
@@ -463,6 +465,140 @@
       </article>
     </section>
 
+
+    <!-- CIMAT 1.0.0-beta: elicitación de conocimiento independiente de normas -->
+    <section data-panel="beta" class="hidden" role="tabpanel">
+      <div class="section-heading">
+        <h2>Laboratorio de conocimiento tácito · CIMAT 1.0.0-beta</h2>
+        <p>Profundización, hipótesis de extracción y formalización de procesos reales, sin utilizar normas como guía de entrevista.</p>
+      </div>
+      <article class="card">
+        <p class="c100-disclaimer"><strong>Prototipo académico:</strong> utiliza únicamente respuestas ficticias para las pruebas. La IA es opcional, requiere consentimiento adicional y no valida por sí sola ningún hallazgo. Las comparaciones normativas se realizan únicamente después de documentar el proceso real.</p>
+        <p id="c100-status" role="status" aria-live="polite">Selecciona esta sección para cargar tus entrevistas privadas.</p>
+        <div id="c100-controls" class="hidden">
+          <div class="c100-toolbar">
+            <label>Entrevista propia que deseas analizar
+              <select id="c100-select"><option value="">Selecciona una entrevista</option></select>
+            </label>
+            <button type="button" id="c100-reload" class="outline">Actualizar datos</button>
+          </div>
+          <p id="c100-no-sessions" class="subtle hidden">No tienes entrevistas registradas. Comienza una en la pestaña «Entrevistas».</p>
+          <div id="c100-details" class="hidden">
+            <h3 id="c100-session-state">Entrevista seleccionada</h3>
+            <p id="c100-summary" role="status" aria-live="polite"></p>
+            <div class="c100-lab">
+              <section class="c100-box">
+                <h3>1. Profundización mediante preguntas de seguimiento</h3>
+                <p class="subtle">Las propuestas son generadas mediante <strong>reglas explícitas</strong> y preguntas del instrumento; no utilizan IA. El entrevistado puede responderlas u omitirlas mientras su entrevista esté abierta.</p>
+                <label>Respuesta original para profundizar
+                  <select id="c100-base"><option value="">Selecciona una pregunta respondida</option></select>
+                </label>
+                <div id="c100-suggestions" class="c100-items" aria-live="polite"></div>
+                <label>Pregunta de seguimiento adicional (opcional)
+                  <textarea id="c100-custom-followup" rows="2" maxlength="500" placeholder="¿Qué hace cuando ocurre una situación diferente a la habitual?"></textarea>
+                </label>
+                <button id="c100-add-followup" type="button" class="outline">Añadir pregunta de seguimiento</button>
+                <h4>Preguntas registradas y respuestas</h4>
+                <div id="c100-followups" class="c100-items" aria-live="polite"></div>
+              </section>
+              <section class="c100-box">
+                <h3>2. Extracción y trazabilidad del conocimiento</h3>
+                <p class="subtle">Cada hallazgo debe tener una evidencia textual exacta de una respuesta. Se almacena primero como <strong>hipótesis propuesta</strong>, nunca como hecho verificado.</p>
+                <form id="c100-finding-form">
+                  <div class="c100-grid">
+                    <label>Tipo de elemento
+                      <select id="c100-type" required>
+                        <option value="proceso">Proceso</option><option value="actividad">Actividad</option>
+                        <option value="tarea">Tarea</option><option value="decision">Decisión</option>
+                        <option value="rol">Rol</option><option value="entrada">Entrada</option>
+                        <option value="salida">Salida</option><option value="excepcion">Excepción</option>
+                        <option value="criterio">Criterio</option>
+                      </select>
+                    </label>
+                    <label>Nombre del hallazgo
+                      <input id="c100-title" required minlength="3" maxlength="180" placeholder="Por ejemplo: revisar existencias">
+                    </label>
+                  </div>
+                  <label>Descripción
+                    <textarea id="c100-description" maxlength="1200" rows="2" placeholder="Qué se ha identificado y qué falta por verificar"></textarea>
+                  </label>
+                  <label>Respuesta que aporta la evidencia
+                    <select id="c100-source" required><option value="">Selecciona una respuesta</option></select>
+                  </label>
+                  <p id="c100-evidence-preview" class="c100-source-text">Selecciona una respuesta para consultar el texto original.</p>
+                  <label>Fragmento literal de evidencia
+                    <textarea id="c100-quote" required rows="2" maxlength="550" minlength="8" placeholder="Copia un fragmento exacto de la respuesta, sin cambiar sus palabras"></textarea>
+                  </label>
+                  <button type="submit">Registrar hipótesis manual</button>
+                </form>
+                <details class="c100-box" style="margin-top:19px">
+                  <summary><strong>Extracción asistida por IA (opcional)</strong></summary>
+                  <p>Si habilitas esta función, se enviarán las respuestas de la entrevista seleccionada al proveedor externo de IA para proponer posibles elementos de proceso. La transmisión se realiza solo cuando pulses el botón, y las propuestas deben revisarse individualmente. No utilices respuestas reales de trabajadores durante el piloto técnico.</p>
+                  <label class="checkline"><input id="c100-ai-consent" type="checkbox"> Autorizo de forma adicional el envío de las respuestas ficticias de esta entrevista al proveedor de IA para este análisis.</label>
+                  <button type="button" id="c100-ai-run" class="outline">Analizar respuestas con IA</button>
+                  <div id="c100-ai-preview" class="c100-items" aria-live="polite"></div>
+                </details>
+                <h4>Hallazgos y revisión humana</h4>
+                <div id="c100-findings" class="c100-items" aria-live="polite"></div>
+              </section>
+              <section class="c100-box">
+                <h3>3. Formalización del proceso real</h3>
+                <p class="subtle">El diagrama representa únicamente elementos confirmados por la persona que revisa la entrevista. Una relación solo se crea cuando se registra explícitamente.</p>
+                <div id="c100-canvas" class="c100-diagram" role="img" aria-label="Diagrama provisional del proceso identificado en la entrevista"></div>
+                <form id="c100-relation-form">
+                  <h4>Registrar una relación entre hallazgos confirmados</h4>
+                  <div class="c100-grid">
+                    <label>Desde
+                      <select id="c100-edge-from" required><option value="">Selecciona elemento</option></select>
+                    </label>
+                    <label>Hasta
+                      <select id="c100-edge-to" required><option value="">Selecciona elemento</option></select>
+                    </label>
+                    <label>Relación
+                      <select id="c100-edge-type">
+                        <option value="precede">Precede</option>
+                        <option value="contiene">Contiene</option>
+                        <option value="participa">Participa</option>
+                        <option value="utiliza">Utiliza</option>
+                        <option value="genera">Genera</option>
+                        <option value="depende">Depende de</option>
+                      </select>
+                    </label>
+                    <label>Justificación de la relación
+                      <input id="c100-edge-note" maxlength="700" placeholder="Fundamento o condición observada">
+                    </label>
+                  </div>
+                  <button type="submit" class="outline">Registrar relación verificada</button>
+                </form>
+                <div id="c100-relations" class="c100-items"></div>
+              </section>
+              <section class="c100-box">
+                <h3>4. Comparación opcional con referencias</h3>
+                <p class="subtle">La comparación es posterior y manual. No modifica las entrevistas ni implica automáticamente cumplimiento o incumplimiento. Registra la fuente y edición exacta del modelo utilizado.</p>
+                <form id="c100-contrast-form">
+                  <label>Hallazgo confirmado a contrastar
+                    <select id="c100-contrast-hallazgo" required><option value="">Selecciona un hallazgo</option></select>
+                  </label>
+                  <label>Referencia (norma, metodología o manual, con versión)
+                    <input id="c100-reference" minlength="5" maxlength="300" required placeholder="Nombre y edición o versión verificable">
+                  </label>
+                  <label>Observación del contraste
+                    <textarea id="c100-observation" minlength="10" maxlength="1200" required placeholder="Describa similitudes, diferencias y evidencia, sin emitir un dictamen automático"></textarea>
+                  </label>
+                  <button type="submit" class="outline">Registrar comparación documentada</button>
+                </form>
+                <div id="c100-contrasts" class="c100-items"></div>
+                <div class="c100-actions">
+                  <button id="c100-export" type="button">Exportar modelo validado (JSON)</button>
+                </div>
+                <p class="subtle">La exportación contiene evidencias textuales y debe resguardarse apropiadamente. Este modelo es provisional, susceptible de revisión y distinto de los modelos de referencia de la Biblioteca.</p>
+              </section>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
     <section data-panel="modelo" class="hidden" role="tabpanel">
       <article class="card">
         <h2>Constructor manual de metodologías · v0.8.5</h2>
@@ -742,5 +878,6 @@
 <script src="constructor.js?v=0.8.5-7" defer></script>
  <script src="cuestionario.js?v=0.8.6-2" defer></script>
 <script src="entrevistas.js?v=0.8.7-3" defer></script>
+<script src="beta.js?v=1.0.0-beta-1" defer></script>
 </body>
 </html>

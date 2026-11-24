@@ -518,8 +518,11 @@ function bind(){
   const b=e.target.closest("button[data-ai]");if(!b)return;
   doAction(async()=>{
    const x=pendingAI[Number(b.dataset.ai)];if(!x)return;
+   const remaining=pendingAI.filter(y=>y!==x);
    const p=payloadFinding(x.fuente,x.tipo,x.titulo,x.descripcion,x.evidencia_literal,"ia",x.modelo||null);
-   await saveFinding(p);pendingAI=pendingAI.filter(y=>y!==x);renderAIPreview();
+   await saveFinding(p);
+   pendingAI=remaining;
+   renderAIPreview();
   });
  });
  $("c100-findings").addEventListener("click",e=>{

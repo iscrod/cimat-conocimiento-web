@@ -14,7 +14,7 @@ const label={proceso:"Proceso",actividad:"Actividad",tarea:"Tarea",decision:"Dec
 const edgeTypes={precede:"Precede",contiene:"Contiene",participa:"Participa",
   utiliza:"Utiliza",genera:"Genera",depende:"Depende de"};
 let owner="",banks=[],sessions=[],selected=null,base=[],followups=[],findings=[],relations=[],contrasts=[];
-let pendingAI=[],busy=false,graph=null;
+let pendingAI=[],pendingProbes=[],busy=false,graph=null;
 function session(){
  let s;
  try{s=JSON.parse(sessionStorage.getItem("cimat_v012_sesion")||"null");}catch(_){}
@@ -48,9 +48,9 @@ function msg(text,error=false){
 function show(id,yes){$(id).classList.toggle("hidden",!yes);}
 function clean(){
  if(graph){graph.destroy();graph=null;}
- owner="";banks=[];sessions=[];selected=null;base=[];followups=[];findings=[];relations=[];contrasts=[];pendingAI=[];
+ owner="";banks=[];sessions=[];selected=null;base=[];followups=[];findings=[];relations=[];contrasts=[];pendingAI=[];pendingProbes=[];
  $("c100-select").replaceChildren();$("c100-details").classList.add("hidden");
- $("c100-ai-preview").replaceChildren();$("c100-select").replaceChildren();
+ $("c100-ai-preview").replaceChildren();$("c100-probe-preview").replaceChildren();$("c100-select").replaceChildren();
  msg("Selecciona el módulo para cargar tus entrevistas privadas.");
 }
 function qList(){
@@ -100,8 +100,8 @@ async function selectInterview(id){
   $("c100-ai-probes-consent").checked=false;
   $("c100-ai-probes").replaceChildren();
  }
- pendingAI=[];
- $("c100-ai-preview").replaceChildren();
+ pendingAI=[];pendingProbes=[];
+ $("c100-ai-preview").replaceChildren();$("c100-probe-preview").replaceChildren();
  if(!selected){show("c100-details",false);if(graph){graph.destroy();graph=null;}return;}
  const eid=encodeURIComponent(id);
  const [r,f,h,l,c]=await Promise.all([
@@ -291,6 +291,36 @@ function renderGraph(){
       "text-background-color":"#fff","text-background-padding":"2px"}}
    ]});
 }
+function renderProbePreview(){
+ const target=$("c100-probe-preview");target.replaceChildren();
+ pendingProbes.forEach((x,i)=>{
+  const item=node("div",null,"c100-row");
+  item.append(node("span",x.pregunta));
+  const b=node("button","Añadir sugerencia","outline");b.type="button";
+  b.dataset.probeAi=String(i);b.disabled=selected?.estado!=="en_curso";
+  item.append(b);target.append(item);
+ });
+ if(!pendingProbes.length)target.append(node("p","No hay propuestas de seguimiento de IA para revisar.","subtle"));
+}
+async function loadAIProbes(){
+ if(!$("c100-ai-consent").checked)throw Error("Autoriza de manera explícita el análisis externo de respuestas ficticias.");
+ if(!selected||selected.estado!=="en_curso")throw Error("Solo se pueden añadir seguimientos a entrevistas abiertas.");
+ const qid=$("c100-base").value;
+ if(!qid||!base.some(a=>a.pregunta_id===qid&&a.estado==="respondida"))
+   throw Error("Selecciona una pregunta principal con respuesta guardada.");
+ const previous=selected.id,user=session().user.id;
+ const r=await fetch(root+"/functions/v1/cimat-entrevista-beta",{
+  method:"POST",headers:{"Content-Type":"application/json",apikey:key,Authorization:"Bearer "+session().access_token},
+  body:JSON.stringify({accion:"sondear",entrevista_id:previous,pregunta_id:qid,consentimiento_externo:true})
+ });
+ let data={};try{data=await r.json();}catch(_){}
+ if(!r.ok)throw Error(data.mensaje||"HTTP "+r.status+" al consultar IA.");
+ if(session().user.id!==user||selected?.id!==previous)throw Error("Cambió la entrevista activa.");
+ pendingProbes=(Array.isArray(data.preguntas)?data.preguntas:[])
+   .filter(x=>x&&typeof x.pregunta==="string"&&x.pregunta.length>=10);
+ renderProbePreview();
+ msg("Se generaron "+pendingProbes.length+" sugerencias opcionales. Elige cuáles deseas incorporar.");
+}
 function renderAIPreview(){
  const target=$("c100-ai-preview");target.replaceChildren();
  pendingAI.forEach((x,i)=>{
@@ -473,6 +503,17 @@ function bind(){
   });
  });
  $("c100-ai-run").addEventListener("click",()=>doAction(loadAI));
+ $("c100-ai-probes").addEventListener("click",()=>doAction(loadAIProbes));
+ $("c100-probe-preview").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-probe-ai]");if(!b)return;
+  doAction(async()=>{
+   const x=pendingProbes[Number(b.dataset.probeAi)];
+   if(!x)return;
+   await addFollowup(x.pregunta,x.senal||"otro");
+   pendingProbes=pendingProbes.filter(y=>y!==x);
+   renderProbePreview();
+  });
+ });
  $("c100-ai-preview").addEventListener("click",e=>{
   const b=e.target.closest("button[data-ai]");if(!b)return;
   doAction(async()=>{

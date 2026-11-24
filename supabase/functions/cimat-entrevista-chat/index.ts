@@ -91,7 +91,7 @@ function normalizeGeminiModel(value:string):string {
  const clean=value.trim().replace(/^models\//,"");
  return /^gemini-[a-z0-9.-]{3,90}$/.test(clean)?clean:"gemini-3.8-flash";
 }
-async function discoverGeminiFallback(apiKey:string, excluded:string):Promise<string|null> {
+async function discoverGeminiFallback(apiKey:string, excluded:string):Promise<string[]> {
  const available=new Set<string>();
  let page="";
  for(let i=0;i<3;i++){
@@ -102,9 +102,9 @@ async function discoverGeminiFallback(apiKey:string, excluded:string):Promise<st
   let data:any;
   try{
    const res=await fetch(url,{headers:{"x-goog-api-key":apiKey},signal:controller.signal});
-   if(!res.ok)return null;
+   if(!res.ok)return [];
    data=await res.json();
-  }catch(_){return null;}
+  }catch(_){return [];}
   finally{clearTimeout(timer);}
   for(const raw of Array.isArray(data?.models)?data.models:[]){
    const id=String(raw?.name||"").replace(/^models\//,"");
@@ -120,11 +120,14 @@ async function discoverGeminiFallback(apiKey:string, excluded:string):Promise<st
   "gemini-3.8-flash","gemini-3.6-flash","gemini-3.5-flash-lite",
   "gemini-3.1-flash-lite","gemini-3.1-flash","gemini-3-flash"
  ];
- for(const id of preferred)if(available.has(id))return id;
- return [...available].sort((a,b)=>{
-   const rank=(x:string)=>x.includes("flash-lite")?0:x.includes("flash")?1:2;
-   return rank(a)-rank(b) || b.localeCompare(a);
- })[0]||null;
+ const ranked=[
+   ...preferred.filter(id=>available.has(id)),
+   ...[...available].filter(id=>!preferred.includes(id)).sort((a,b)=>{
+     const rank=(x:string)=>x.includes("flash-lite")?0:x.includes("flash")?1:2;
+     return rank(a)-rank(b) || b.localeCompare(a);
+   })
+ ];
+ return ranked.slice(0,3);
 }
 function systemPrompt():string {
  return [
@@ -277,14 +280,16 @@ Deno.serve(async(req:Request)=>{
    let actualModel=model;
    let provider=await callModel(actualModel);
    if(provider.status===404){
-     // Algunas cuentas pueden listar Gemini 2.5 pero rechazarlo al generar.
-     const alternative=await discoverGeminiFallback(geminiKey,actualModel);
-     if(alternative){
+     // Algunos modelos se anuncian como disponibles, pero fallan con 404
+     // en proyectos concretos. Se prueban como máximo tres alternativas.
+     const alternatives=await discoverGeminiFallback(geminiKey,actualModel);
+     for(const alternative of alternatives){
        console.info("CIMAT chat: modelo no disponible; intentando alternativa",{
          anterior:actualModel,alternativo:alternative
        });
        actualModel=alternative;
        provider=await callModel(actualModel);
+       if(provider.status!==404)break;
      }
    }
    if(!provider.ok){

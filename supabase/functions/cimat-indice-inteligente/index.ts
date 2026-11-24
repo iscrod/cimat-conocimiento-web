@@ -160,7 +160,7 @@ Deno.serve(async(req:Request)=>{
    const allowSemantic=body.autorizacion_externa===true;
    const {data:cases,error:caseError}=await service.from("cimat_12_casos_piloto").select("*").limit(30);
    if(caseError)return send(500,{mensaje:caseError.message});
-   const examples:any[]=[];let hits1=0,hits5=0,reciprocal=0,ms=0,mode="textual",negAlerts=0;
+   const examples:any[]=[],rankings:any[]=[];let hits1=0,hits5=0,reciprocal=0,ms=0,mode="textual",negAlerts=0;
    const positives=(cases||[]).filter((x:any)=>x.esperado_origen_id!==null).length;
    const negatives=(cases||[]).length-positives;
    for(const item of cases||[]){
@@ -180,24 +180,71 @@ Deno.serve(async(req:Request)=>{
      if(i>=0&&i<5)hits5++;
      if(i>=0)reciprocal+=1/(i+1);
     }
+    ranked.slice(0,5).forEach((x:any,k:number)=>rankings.push({caso_id:item.id,catalogo_id:x.catalogo_id,posicion:k+1,puntaje:x.puntaje}));
     examples.push({caso_id:item.id,caso:item.titulo,esperado:item.esperado_origen_tipo,
       puesto:item.ocupacion,negativo:negative,rango:i<0?null:i+1,top3:ranked.slice(0,3).map((x:any)=>({id:x.catalogo_id,nombre:x.nombre,tipo:x.origen_tipo,puntaje:x.puntaje}))});
    }
    const total=(cases||[]).length;
    if(!total)return send(422,{mensaje:"No se han definido casos ficticios de prueba."});
-   const {error:logError}=await service.from("cimat_12_resultados_piloto").insert({
+   const {data:run,error:logError}=await service.from("cimat_12_resultados_piloto").insert({
     configuracion:mode,casos:total,aciertos_top1:hits1,aciertos_top5:hits5,
+    positivos:positives,controles_negativos:negatives,alertas_negativas:negAlerts,
     falsos_positivos_top5:null,precision_top5:null,recall_top5:null,
     mrr:positives?Number((reciprocal/positives).toFixed(4)):null,tiempo_medio_ms:ms/total,
     notas:"Positivos: "+positives+"; controles negativos: "+negatives+"; alertas en controles: "+negAlerts+". Una referencia positiva conocida por caso positivo; no se estima precisión global ni falsos positivos reales."
-   });
-   if(logError)return send(500,{mensaje:"No se guardó la ejecución: "+logError.message});
+   }).select("id").single();
+   if(logError||!run)return send(500,{mensaje:"No se guardó la ejecución: "+(logError?.message||"sin confirmación")});
+   if(rankings.length){
+    const {error:rankingError}=await service.from("cimat_12_recuperaciones_piloto").insert(
+      rankings.map((x:any)=>({...x,resultado_id:run.id})));
+    if(rankingError)return send(500,{mensaje:"Piloto ejecutado, pero falló el registro de rankings: "+rankingError.message});
+   }
    return send(200,{mensaje:"Piloto sintético ejecutado. NO constituye validación científica con personas.",
-     casos:total,positivos:positives,controles_negativos:negatives,
+     ejecucion_id:run.id,casos:total,positivos:positives,controles_negativos:negatives,
      aciertos_top1:hits1,aciertos_top5:hits5,alertas_controles_negativos:negAlerts,
      mrr:positives?reciprocal/positives:null,
      latencia_media_ms:ms/total,modo:mode,detalles:examples,
      faltante:"Etiquetado experto de relevancia y evaluación con trabajadores reales."});
+  }
+  if(action==="resumen_revision"){
+    const {data:runs,error:runError}=await service.from("cimat_12_resultados_piloto")
+      .select("id,casos,aciertos_top1,aciertos_top5,mrr,positivos,controles_negativos,alertas_negativas")
+      .order("evaluado_en",{ascending:false}).limit(1);
+    if(runError)return send(500,{mensaje:runError.message});
+    const last=runs?.[0];
+    if(!last)return send(200,{mensaje:"No hay ejecuciones del piloto."});
+    const [{data:items,error:iError},{data:judges,error:jError}]=await Promise.all([
+      service.from("cimat_12_recuperaciones_piloto").select("caso_id,catalogo_id,posicion")
+        .eq("resultado_id",last.id).limit(300),
+      service.from("cimat_12_juicios_expertos").select("caso_id,catalogo_id,revisor_id,juicio,creado_en")
+        .limit(3000)
+    ]);
+    if(iError||jError)return send(500,{mensaje:"Error consultando etiquetas del piloto."});
+    const bucket=new Map<string,any[]>();
+    for(const j of judges||[]){
+      const key=j.caso_id+"|"+j.catalogo_id,arr=bucket.get(key)||[];
+      arr.push(j);bucket.set(key,arr);
+    }
+    const pairs:{a:string,b:string}[]=[];
+    for(const item of items||[]){
+      const arr=(bucket.get(item.caso_id+"|"+item.catalogo_id)||[])
+        .sort((a:any,b:any)=>a.creado_en.localeCompare(b.creado_en));
+      if(arr.length<2||arr[0].revisor_id===arr[1].revisor_id)continue;
+      pairs.push({a:arr[0].juicio,b:arr[1].juicio});
+    }
+    const n=pairs.length,agreement=n?pairs.filter(x=>x.a===x.b).length/n:null;
+    const labels=["relevante","no_relevante","dudoso"];
+    const chance=n?labels.reduce((sum,label)=>sum+
+      (pairs.filter(x=>x.a===label).length/n)*(pairs.filter(x=>x.b===label).length/n),0):null;
+    const kappa=agreement!==null&&chance!==null&&chance<1?(agreement-chance)/(1-chance):null;
+    const exhaustive=n>0&&n===(items||[]).length&&pairs.every(x=>x.a===x.b&&x.a!=="dudoso");
+    return send(200,{mensaje:"Resumen de anotación humana; pendiente de validación empírica.",
+      ultima_ejecucion:last,recuperaciones:(items||[]).length,pares_doble_revision:n,
+      cobertura:(items||[]).length?n/(items||[]).length:0,
+      acuerdo_observado:agreement,kappa,
+      precision_candidatos_revisados:exhaustive?
+        pairs.filter(x=>x.a==="relevante").length/n:null,
+      nota:"La concordancia requiere al menos dos evaluadores humanos independientes. La exhaustividad global requiere un conjunto de referencia completamente etiquetado."});
   }
   if(action==="juicio"){
    const caso_id=str(body.caso_id,50),catalogo_id=str(body.catalogo_id,50);

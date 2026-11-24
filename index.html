@@ -494,6 +494,13 @@
                   <select id="c100-base"><option value="">Selecciona una pregunta respondida</option></select>
                 </label>
                 <div id="c100-suggestions" class="c100-items" aria-live="polite"></div>
+                <details class="c100-box" style="margin-top:14px">
+                  <summary><strong>Proponer más preguntas con IA (opcional)</strong></summary>
+                  <p class="subtle">La IA podrá analizar únicamente la respuesta ficticia que selecciones para sugerir de una a tres preguntas neutrales. Ninguna pregunta se añade automáticamente.</p>
+                  <label class="checkline"><input id="c100-ai-probes-consent" type="checkbox"> Autorizo el envío de esta respuesta ficticia al proveedor externo de IA para generar preguntas de profundización.</label>
+                  <button type="button" id="c100-ai-probes-run" class="outline">Proponer preguntas con IA</button>
+                  <div id="c100-ai-probes" class="c100-items" aria-live="polite"></div>
+                </details>
                 <label>Pregunta de seguimiento adicional (opcional)
                   <textarea id="c100-custom-followup" rows="2" maxlength="500" placeholder="¿Qué hace cuando ocurre una situación diferente a la habitual?"></textarea>
                 </label>
@@ -878,6 +885,6 @@
 <script src="constructor.js?v=0.8.5-7" defer></script>
  <script src="cuestionario.js?v=0.8.6-2" defer></script>
 <script src="entrevistas.js?v=0.8.7-3" defer></script>
-<script src="beta.js?v=1.0.0-beta-1" defer></script>
+<script src="beta.js?v=1.0.0-beta-2" defer></script>
 </body>
 </html>

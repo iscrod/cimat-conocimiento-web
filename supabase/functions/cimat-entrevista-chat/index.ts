@@ -264,6 +264,8 @@ Deno.serve(async(req:Request)=>{
        cita:quote,justificacion:s(x.justificacion,800),
        faltantes:s(x.faltantes,600),pregunta_aclaracion:s(x.pregunta_aclaracion,300),
        criterios_registrados:entry.caracteristicas.map(c=>c.nombre).slice(0,12),
+       criterios_detalle:entry.relaciones.filter(v=>v.tipo==="caracteriza"||v.tipo==="evalua")
+         .map(v=>({id:v.id,nombre:v.nombre,tipo:v.origen_tipo})).slice(0,12),
        conclusion:"Coincidencia exploratoria. No determina cumplimiento."
      });
      if(comparisons.length>=4)break;

@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS public.cimat_102_indice (
   embedding_modelo text,
   fingerprint text NOT NULL,
   indexado_en timestamptz NOT NULL DEFAULT now(),
-  UNIQUE(origen_tipo,origen_id)
+  UNIQUE(origen_tipo,origen_id,dominio_id)
 );
 CREATE INDEX IF NOT EXISTS cimat_102_indice_dominio ON public.cimat_102_indice(dominio_id,origen_tipo);
 CREATE INDEX IF NOT EXISTS cimat_102_indice_fts ON public.cimat_102_indice USING gin(terminos);
@@ -180,6 +180,7 @@ BEGIN
    IF doc_dom IS DISTINCT FROM NEW.dominio_id THEN RAISE EXCEPTION 'Documento pertenece a otro dominio'; END IF;
  END IF;
  IF TG_TABLE_NAME='cimat_102_practicas' THEN RETURN NEW; END IF;
+ IF NEW.elemento_tipo <> 'rol' THEN
  EXECUTE format('SELECT dominio_id FROM public.%I WHERE id=$1',
    CASE NEW.elemento_tipo
     WHEN 'tarea' THEN 'cimat_0852_tareas'
@@ -189,6 +190,7 @@ BEGIN
     WHEN 'rol' THEN 'cimat_0852_roles_dominios'
     WHEN 'practica' THEN 'cimat_102_practicas'
    END) INTO origen_dom USING NEW.elemento_id;
+ END IF;
  IF NEW.elemento_tipo='rol' THEN
    SELECT dominio_id INTO origen_dom FROM public.cimat_0852_roles_dominios
     WHERE rol_id=NEW.elemento_id AND dominio_id=NEW.dominio_id LIMIT 1;
@@ -259,7 +261,7 @@ BEGIN
  INSERT INTO public.cimat_102_indice(
    id,dominio_id,origen_tipo,origen_id,nombre,descripcion,tipo_original,codigo,documento_id,pagina,
    atributos,texto_busqueda,fingerprint)
- SELECT p.tipo||':'||p.id::text,p.dominio_id,p.tipo,p.id,p.nombre,coalesce(p.descripcion,''),
+ SELECT p.tipo||':'||p.id::text||CASE WHEN p.tipo='rol' THEN ':'||p.dominio_id::text ELSE '' END,p.dominio_id,p.tipo,p.id,p.nombre,coalesce(p.descripcion,''),
  p.tipo_original,p.codigo,p.documento_id,p.pagina,p.attrs,p.fulltext,md5(p.fulltext||coalesce(p.documento_id::text,'')||coalesce(p.pagina::text,''))
  FROM prepared p
  ON CONFLICT(id) DO UPDATE SET
@@ -300,9 +302,9 @@ AS $$
      ts_rank_cd(i.terminos,websearch_to_tsquery('spanish',q)) ELSE 0 END)*0.35
      + extensions.similarity(i.nombre,coalesce(q,''))*0.25
      + CASE WHEN q_embedding IS NOT NULL AND i.embedding IS NOT NULL
-       THEN (1 - (i.embedding <=> q_embedding))*0.4 ELSE 0 END)::double precision AS puntaje,
+       THEN (1 - (i.embedding OPERATOR(extensions.<=>) q_embedding))*0.4 ELSE 0 END)::double precision AS puntaje,
    CASE WHEN q_embedding IS NOT NULL AND i.embedding IS NOT NULL
-       THEN (1 - (i.embedding <=> q_embedding))::double precision ELSE NULL END AS similaridad
+       THEN (1 - (i.embedding OPERATOR(extensions.<=>) q_embedding))::double precision ELSE NULL END AS similaridad
  FROM public.cimat_102_indice i
  WHERE (filtro_dominios IS NULL OR i.dominio_id = ANY(filtro_dominios))
  ORDER BY puntaje DESC,i.id

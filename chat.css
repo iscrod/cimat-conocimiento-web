@@ -1,0 +1,31 @@
+/* CIMAT beta: entrevista conversacional y revisión exploratoria. */
+.cchat-shell{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.cchat-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.cchat-toolbar label{flex:1;min-width:230px;margin:0}
+.cchat-muted{color:#4f687c;font-size:12px;line-height:1.5}
+.cchat-intro{background:#f2f8fc;border-left:4px solid #35809f;padding:15px;border-radius:8px}
+.cchat-thread{border:1px solid #d5e3ee;background:#f6f9fc;border-radius:14px;padding:17px;min-height:260px;max-height:680px;overflow-y:auto;display:grid;align-content:start;gap:13px}
+.cchat-bubble{padding:13px 16px;border:1px solid #d7e3ed;background:white;border-radius:15px;max-width:90%;overflow-wrap:anywhere;box-shadow:0 1px 3px #15354d0a}
+.cchat-bubble.cchat-user{justify-self:end;background:#e5f2ed;border-color:#bbd8cb}
+.cchat-bubble.cchat-assistant{justify-self:start}
+.cchat-bubble>small{display:block;font-size:11px;font-weight:700;color:#53697b;margin-bottom:7px}
+.cchat-bubble>p{margin:0;white-space:pre-wrap;line-height:1.6}
+.cchat-insights{margin:13px 0 0;padding-top:8px;border-top:1px solid #d7e0e7}
+.cchat-insights summary{cursor:pointer;font-size:12px;font-weight:700;color:#1c6681;padding:5px 0}
+.cchat-finding,.cchat-match{border:1px solid #dce5ed;background:#fbfdff;border-radius:9px;margin:10px 0;padding:12px}
+.cchat-finding strong,.cchat-match strong{display:block;font-size:13px;line-height:1.4;color:#173c56}
+.cchat-finding p,.cchat-match p{margin:7px 0}
+.cchat-insights blockquote{font-size:12px;margin:9px 0;padding:9px 12px;background:#f1f6f9;border-left:3px solid #bdd2e2;color:#3b5268}
+.cchat-insights textarea,.cchat-insights select{display:block;width:100%;margin:8px 0 10px}
+.cchat-insights button{margin:5px 0;font-size:11px;padding:8px 10px}
+.cchat-label{display:inline-block;border-radius:5px;padding:4px 8px;background:#e9eef5;color:#415b76;font-size:11px;font-weight:700}
+.cchat-compose{border:1px solid #d6e3ee;background:#fff;border-radius:12px;padding:17px}
+.cchat-compose textarea{min-height:100px;width:100%;font-size:15px}
+.cchat-compose label{display:block}
+.cchat-consent{display:flex!important;align-items:flex-start;gap:10px;margin:12px 0;font-size:13px}
+.cchat-consent input{flex-shrink:0;margin-top:3px;width:18px;height:18px}
+.cchat-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:10px}
+.cchat-pending{color:#345b76;font-style:italic;font-size:13px;padding:5px 12px}
+#cchat-status{padding:12px;background:#eef7f8;color:#2a5a65;border-radius:8px;margin:11px 0;overflow-wrap:anywhere}
+#cchat-status.error{background:#fff0f0;border:1px solid #e6b8b8;color:#9b3434}
+@media(max-width:640px){.cchat-thread{max-height:520px;padding:10px}.cchat-bubble{max-width:100%;padding:12px}.cchat-compose{padding:12px}.cchat-footer button{width:100%}}

@@ -304,16 +304,16 @@
   }));
   $("cchat-consent").addEventListener("change",render);
   $("cchat-form").addEventListener("submit",e=>{
-   e.preventDefault();send();
+   e.preventDefault();send().catch(err=>status(err.message||String(err),true));
   });
   $("cchat-compose").addEventListener("keydown",e=>{
-   if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();send();}
+   if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();send().catch(err=>status(err.message||String(err),true));}
   });
   $("cchat-thread").addEventListener("click",e=>{
    const save=e.target.closest("button[data-hyp]");
    if(save){action(()=>saveFinding(save.dataset.turn,Number(save.dataset.hyp)));return;}
    const question=e.target.closest("button[data-clarify]");
-   if(question){clarify(question.dataset.clarify);return;}
+   if(question){try{clarify(question.dataset.clarify);}catch(err){status(err.message,true);}return;}
    const check=e.target.closest("button[data-review]");
    if(check)action(()=>review(check.dataset.review));
   });

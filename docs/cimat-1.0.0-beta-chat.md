@@ -78,8 +78,8 @@ Las pruebas SQL transaccionales con \`ROLLBACK\` verificaron:
 
 ## Prueba manual de aceptación (datos ficticios)
 
-1. Iniciar sesión en CIMAT y crear una entrevista en la pestaña **Entrevistas**.
-2. Abrir **Entrevista con IA**, seleccionar esa entrevista y escribir un relato ficticio del trabajo, por ejemplo: «Preparo un cronograma con fechas y responsables; luego reviso con el equipo si las tareas son viables».
+1. Iniciar sesión en CIMAT y abrir **Entrevista con IA**. Se puede crear una nueva sesión directamente desde esa pestaña, seleccionando un cuestionario publicado y aceptando el consentimiento inicial; **no es necesario contestar previamente las 12 preguntas**. También es posible seleccionar una entrevista ya creada.
+2. Escribir un relato ficticio del trabajo, por ejemplo: «Preparo un cronograma con fechas y responsables; luego reviso con el equipo si las tareas son viables».
 3. Aceptar expresamente el envío externo, pulsar **Enviar** y verificar que la IA solicite detalles concretos, no que imponga una norma como cuestionario.
 4. Responder varias veces, incluyendo decisiones, criterios de revisión y casos excepcionales.
 5. Expandir los hallazgos y las coincidencias normativas que pudieran detectarse.
